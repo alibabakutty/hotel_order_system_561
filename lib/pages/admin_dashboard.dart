@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+class AdminDashboard extends StatefulWidget {
+  const AdminDashboard({super.key});
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
-class _DashboardState extends State<Dashboard> {
+class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory Dashboard'),
+        title: const Text('Admin AdminDashboard'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.blue.shade800,
+        leading: IconButton(
+          onPressed: () {
+            context.go('/');
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -24,7 +31,7 @@ class _DashboardState extends State<Dashboard> {
           children: [
             // Header
             const Text(
-              'Master Data Management',
+              'Hotel Order Management',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -33,7 +40,7 @@ class _DashboardState extends State<Dashboard> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Manage your inventory data sources',
+              'Manage your hotel arrangements',
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 30),
@@ -47,10 +54,10 @@ class _DashboardState extends State<Dashboard> {
               color: Colors.indigo,
               onTap: () {
                 // Navigate to Item Master screen
-                _showComingSoon(context, 'Item Master');
+                context.go('/cda_page', extra: 'item');
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 5),
 
             // Supplier Master Card
             _buildMasterCard(
@@ -61,21 +68,21 @@ class _DashboardState extends State<Dashboard> {
               color: Colors.teal,
               onTap: () {
                 // Navigate to Supplier Master screen
-                _showComingSoon(context, 'Supplier Master');
+                context.go('/cda_page', extra: 'supplier');
               },
             ),
+            const SizedBox(height: 5),
 
-            const SizedBox(height: 20),
-            // Order Master
+            // Supplier Master Card
             _buildMasterCard(
               context,
-              title: 'Order Master',
-              subtitle: 'Manage your orders',
-              icon: Icons.receipt_long_outlined,
+              title: 'Table Master',
+              subtitle: 'Manage your tables',
+              icon: Icons.table_restaurant_outlined,
               color: Colors.orange.shade700,
               onTap: () {
-                // Navigate to order screen
-                _showComingSoon(context, 'Order Master');
+                // Navigate to Supplier Master screen
+                context.go('/cda_page', extra: 'table');
               },
             ),
 
