@@ -32,7 +32,7 @@ class AuthErrorMessages {
       case 'invalid-auth-token':
         return 'Session expired. Please login again';
       default:
-        return 'Authentication error occured';
+        return 'Authentication error occurred';
     }
   }
 }

@@ -1,26 +1,43 @@
-class AuthModels {
-  final String uid; // Changed from adminId to more generic uid
+class AuthUser {
+  final String uid;
   final String? username;
   final String? email;
   final String? mobileNumber;
-  final bool isAdmin;
-  final bool isSupplier;
-  final String? supplierId; // Specific ID for suppliers if needed
+  final UserRole role;
+  final String? supplierId;
 
-  AuthModels({
+  AuthUser({
     required this.uid,
     this.username,
     this.email,
     this.mobileNumber,
-    this.isAdmin = false,
-    this.isSupplier = false,
+    this.role = UserRole.user,
     this.supplierId,
   });
 
-  // Helper method to check user role
-  String get role {
-    if (isAdmin) return 'admin';
-    if (isSupplier) return 'supplier';
-    return 'user';
+  factory AuthUser.fromAdmin(Map<String, dynamic> data, String uid) {
+    return AuthUser(
+      uid: uid,
+      username: data['username'],
+      email: data['email'],
+      role: UserRole.admin,
+    );
   }
+
+  factory AuthUser.fromSupplier(Map<String, dynamic> data, String uid) {
+    return AuthUser(
+      uid: uid,
+      username: data['name'],
+      email: data['email'],
+      mobileNumber: data['mobile_number'],
+      role: UserRole.supplier,
+      supplierId: data['supplier_id'] ?? uid,
+    );
+  }
+
+  bool get isAdmin => role == UserRole.admin;
+  bool get isSupplier => role == UserRole.supplier;
+  bool get isRegularUser => role == UserRole.user;
 }
+
+enum UserRole { user, admin, supplier }

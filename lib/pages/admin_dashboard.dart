@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
+import 'package:food_order_system/authentication/auth_models.dart';
 
 class AdminDashboard extends StatefulWidget {
   final AuthService authService;
@@ -23,20 +24,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _fetchAdminData() async {
     try {
-      final currentUser = widget.authService.currentUser;
+      final authUser = await widget.authService.getCurrentAuthUser();
 
-      if (currentUser != null) {
-        final authModel = await widget.authService.getAuthModels(
-          currentUser.uid,
-        );
-        setState(() {
-          adminUsername = authModel.username ?? 'Admin';
-          isLoading = false;
-        });
-      } else {
-        setState(() => isLoading = false);
+      if (authUser.role != UserRole.admin) {
         if (mounted) context.go('/admin_login');
+        return;
       }
+
+      setState(() {
+        adminUsername = authUser.username ?? 'Admin';
+        isLoading = false;
+      });
     } catch (e) {
       setState(() => isLoading = false);
       if (mounted) {
@@ -46,6 +44,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             backgroundColor: Colors.red,
           ),
         );
+        context.go('/admin_login');
       }
     }
   }
