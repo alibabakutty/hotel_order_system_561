@@ -78,11 +78,23 @@ final _router = GoRouter(
         ),
         GoRoute(
           path: '/supplier_master',
-          builder: (context, state) => const SupplierMaster(),
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return SupplierMaster(
+              supplierName: args['supplierName'],
+              isDisplayMode: args['isDisplayMode'] ?? false,
+            );
+          },
         ),
         GoRoute(
           path: '/table_master',
-          builder: (context, state) => const TableMaster(),
+          builder: (context, state) {
+            final args = state.extra as Map<String, dynamic>? ?? {};
+            return TableMaster(
+              tableNumber: args['tableNumber'],
+              isDisplayMode: args['isDisplayMode'] ?? false,
+            );
+          },
         ),
         GoRoute(
           path: '/order_master',
