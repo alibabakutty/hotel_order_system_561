@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:food_order_system/authentication/auth_exception.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,36 +35,51 @@ class _AdminLoginState extends State<AdminLogin> {
 
       try {
         if (_isSignUp) {
-          // create new admin account
-          await _auth.createNewAccount(
+          // Create new admin account using the new method
+          await _auth.createAdminAccount(
             username: _usernameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
-            isAdmin: true,
           );
         } else {
-          // sign in existing account
-          await _auth.signIn(
+          // Sign in existing admin using the new method
+          await _auth.adminSignIn(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
         }
+
         // on success navigate to home page
         if (mounted) {
           context.go('/admin_dashboard');
         }
-      } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.message ?? 'An error occurred. Please try again.',
-              style: const TextStyle(fontSize: 16),
+      } on AuthException catch (e) {
+        // Handle custom auth exceptions
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
+      } catch (e) {
+        // Handle any other unexpected errors
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'An unexpected error occurred. Please try again.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -95,7 +110,7 @@ class _AdminLoginState extends State<AdminLogin> {
                 children: [
                   const SizedBox(height: 16),
                   Text(
-                    _isSignUp ? 'Create Account' : 'Welcome Back',
+                    _isSignUp ? 'Create Admin Account' : 'Admin Login',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -104,8 +119,8 @@ class _AdminLoginState extends State<AdminLogin> {
                   const SizedBox(height: 8),
                   Text(
                     _isSignUp
-                        ? 'Sign up to get started'
-                        : 'Sign in to continue',
+                        ? 'Create a new admin account'
+                        : 'Sign in to access admin dashboard',
                     style: Theme.of(
                       context,
                     ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
@@ -143,7 +158,7 @@ class _AdminLoginState extends State<AdminLogin> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        labelText: 'Admin UserID',
+                        labelText: 'Admin Email',
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -223,7 +238,7 @@ class _AdminLoginState extends State<AdminLogin> {
                                 strokeWidth: 2,
                               )
                             : Text(
-                                _isSignUp ? 'Sign Up' : 'Sign In',
+                                _isSignUp ? 'Create Admin' : 'Sign In',
                                 style: const TextStyle(fontSize: 16),
                               ),
                       ),
@@ -238,12 +253,12 @@ class _AdminLoginState extends State<AdminLogin> {
                 children: [
                   Text(
                     _isSignUp
-                        ? "Already have an account?"
-                        : "Don't have an account?",
+                        ? "Already have an admin account?"
+                        : "Need to create an admin account?",
                   ),
                   TextButton(
                     onPressed: _toggleSignUp,
-                    child: Text(_isSignUp ? 'Sign In' : 'Sign Up'),
+                    child: Text(_isSignUp ? 'Sign In' : 'Create Account'),
                   ),
                 ],
               ),

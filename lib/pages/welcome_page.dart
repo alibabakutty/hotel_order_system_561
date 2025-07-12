@@ -52,7 +52,7 @@ class WelcomePage extends StatelessWidget {
                               // Hotel name with subtle shadow
                               const Center(
                                 child: Text(
-                                  'Grand Raj Hotel',
+                                  'Grand Hotel',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 42,
@@ -225,7 +225,7 @@ class WelcomePage extends StatelessWidget {
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(12),
                                     onTap: () {
-                                      context.go('/dashboard');
+                                      context.go('/supplier_login');
                                     },
                                     child: Center(
                                       child: Text(

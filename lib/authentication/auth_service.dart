@@ -18,14 +18,18 @@ class AuthService {
     return await _authRepository.getAuthModel(uid);
   }
 
-  Future<User> signIn({required String email, required String password}) async {
+  // Admin-specific authentication
+  Future<User> adminSignIn({
+    required String email,
+    required String password,
+  }) async {
     try {
       email = email.trim();
       password = password.trim();
 
       if (email.isEmpty || password.isEmpty) {
         throw AuthException(
-          code: 'Invalid email-or-password',
+          code: 'invalid-credentials',
           message: "Email and password cannot be empty",
         );
       }
@@ -42,6 +46,18 @@ class AuthService {
         );
       }
 
+      // Verify the user is actually an admin
+      final authModel = await _authRepository.getAuthModel(
+        userCredential.user!.uid,
+      );
+      if (!authModel.isAdmin) {
+        await _firebaseAuth.signOut();
+        throw AuthException(
+          code: 'not-admin',
+          message: 'This account is not registered as an admin',
+        );
+      }
+
       return userCredential.user!;
     } on FirebaseAuthException catch (e) {
       throw AuthException(
@@ -51,16 +67,69 @@ class AuthService {
     } catch (e) {
       throw AuthException(
         code: 'unknown-error',
-        message: 'Unknown error occured',
+        message: 'Unknown error occurred',
       );
     }
   }
 
-  Future<User?> createNewAccount({
+  // Supplier-specific authentication
+  Future<User> supplierSignIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      email = email.trim();
+      password = password.trim();
+
+      if (email.isEmpty || password.isEmpty) {
+        throw AuthException(
+          code: 'invalid-credentials',
+          message: "Email and password cannot be empty",
+        );
+      }
+
+      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (userCredential.user == null) {
+        throw AuthException(
+          code: 'no-user',
+          message: 'Authentication succeeded but no user returned',
+        );
+      }
+
+      // Verify the user is actually a supplier
+      final authModel = await _authRepository.getAuthModel(
+        userCredential.user!.uid,
+      );
+      if (!authModel.isSupplier) {
+        await _firebaseAuth.signOut();
+        throw AuthException(
+          code: 'not-supplier',
+          message: 'This account is not registered as a supplier',
+        );
+      }
+
+      return userCredential.user!;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(
+        code: e.code,
+        message: AuthErrorMessages.getMessage(e.code),
+      );
+    } catch (e) {
+      throw AuthException(
+        code: 'unknown-error',
+        message: 'Unknown error occurred',
+      );
+    }
+  }
+
+  Future<User> createAdminAccount({
     required String username,
     required String email,
     required String password,
-    required bool isAdmin,
   }) async {
     try {
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
@@ -70,11 +139,10 @@ class AuthService {
 
       final user = userCredential.user!;
 
-      await _authRepository.createUserRecord(
+      await _authRepository.createAdminRecord(
         uid: user.uid,
         username: username,
         email: email,
-        isAdmin: isAdmin,
       );
 
       return user;
@@ -85,8 +153,45 @@ class AuthService {
       );
     } catch (e) {
       throw AuthException(
-        code: 'account-creation-failed',
-        message: 'Failed to create account: ${e.toString()}',
+        code: 'admin-creation-failed',
+        message: 'Failed to create admin account: ${e.toString()}',
+      );
+    }
+  }
+
+  Future<User> createSupplierAccount({
+    required String name,
+    required String email,
+    required String password,
+    required String mobileNumber,
+    String? supplierId,
+  }) async {
+    try {
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = userCredential.user!;
+
+      await _authRepository.createSupplierRecord(
+        uid: user.uid,
+        name: name,
+        email: email,
+        mobileNumber: mobileNumber,
+        supplierId: supplierId,
+      );
+
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(
+        code: e.code,
+        message: AuthErrorMessages.getMessage(e.code),
+      );
+    } catch (e) {
+      throw AuthException(
+        code: 'supplier-creation-failed',
+        message: 'Failed to create supplier account: ${e.toString()}',
       );
     }
   }
