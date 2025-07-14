@@ -15,18 +15,6 @@ class _OrderMasterState extends State<OrderMaster> {
   String? supplierUsername;
   bool isLoading = true;
 
-  // Section expansion states
-  bool _firstOrderExpanded = true;
-  bool _secondOrderExpanded = false;
-
-  // Order items list
-  final List<Map<String, dynamic>> _firstOrderItems = [];
-  final List<Map<String, dynamic>> _secondOrderItems = [];
-
-  // controllers
-  final _firstOrderController = TextEditingController();
-  final _secondOrderController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -85,7 +73,7 @@ class _OrderMasterState extends State<OrderMaster> {
   }
 
   // Controllers
-  // final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   final _serialNoController = TextEditingController();
   final _tableNoController = TextEditingController();
   final _supplierNameController = TextEditingController();
@@ -109,10 +97,23 @@ class _OrderMasterState extends State<OrderMaster> {
     _maleController.dispose();
     _femaleController.dispose();
     _kidsController.dispose();
-    _firstOrderController.dispose();
-    _secondOrderController.dispose();
     super.dispose();
   }
+
+  // void _submitForm() {
+  //   if (_formKey.currentState!.validate()) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           'Order #${_serialNoController.text} submitted successfully',
+  //         ),
+  //         duration: const Duration(seconds: 2),
+  //       ),
+  //     );
+  //     _formKey.currentState!.reset();
+  //     _supplierNameController.text = supplierUsername!;
+  //   }
+  // }
 
   void _showMemberDistributionDialog() {
     int totalMembers = int.tryParse(_quantityController.text) ?? 0;
@@ -244,48 +245,6 @@ class _OrderMasterState extends State<OrderMaster> {
     );
   }
 
-  void _addFirstOrderItem() {
-    if (_firstOrderController.text.isNotEmpty) {
-      setState(() {
-        _firstOrderItems.add({
-          'name': _firstOrderController.text,
-          'quantity': 1,
-        });
-        _firstOrderController.clear();
-      });
-    }
-  }
-
-  void _addSecondOrderItem() {
-    if (_secondOrderController.text.isNotEmpty) {
-      setState(() {
-        _secondOrderItems.add({
-          'name': _secondOrderController.text,
-          'quantity': 1,
-        });
-        _secondOrderController.clear();
-      });
-    }
-  }
-
-  void _toggleFirstOrder() {
-    setState(() {
-      _firstOrderExpanded = !_firstOrderExpanded;
-      if (_firstOrderExpanded) {
-        _secondOrderExpanded = false;
-      }
-    });
-  }
-
-  void _toggleSecondOrder() {
-    setState(() {
-      _secondOrderExpanded = !_secondOrderExpanded;
-      if (_secondOrderExpanded) {
-        _firstOrderExpanded = false;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -341,11 +300,10 @@ class _OrderMasterState extends State<OrderMaster> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Member count and check-in section
             Row(
               children: [
                 SizedBox(
@@ -409,263 +367,14 @@ class _OrderMasterState extends State<OrderMaster> {
               ],
             ),
             const SizedBox(height: 30),
-
-            // First Order Section
-            Card(
-              child: ExpansionPanelList(
-                elevation: 1,
-                expandedHeaderPadding: EdgeInsets.zero,
-                expansionCallback: (int index, bool isExpanded) {
-                  _toggleFirstOrder();
-                },
+            // Rest of your form would go here
+            Form(
+              key: _formKey,
+              child: Column(
                 children: [
-                  ExpansionPanel(
-                    headerBuilder: (BuildContext context, bool isExpanded) {
-                      return ListTile(
-                        title: const Text('First Part of Order'),
-                        trailing: Icon(
-                          _firstOrderExpanded
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                        ),
-                      );
-                    },
-                    body: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _firstOrderController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Item Name',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: _addFirstOrderItem,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          if (_firstOrderItems.isNotEmpty)
-                            Table(
-                              border: TableBorder.all(),
-                              children: [
-                                const TableRow(
-                                  decoration: BoxDecoration(color: Colors.grey),
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Item',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Qty',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Action',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                ..._firstOrderItems.map((item) {
-                                  return TableRow(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(item['name']),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          item['quantity'].toString(),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: IconButton(
-                                          icon: const Icon(Icons.delete),
-                                          onPressed: () {
-                                            setState(() {
-                                              _firstOrderItems.remove(item);
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                    isExpanded: _firstOrderExpanded,
-                  ),
+                  // Your existing form fields...
                 ],
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Second Order Section
-            Card(
-              child: ExpansionPanelList(
-                elevation: 1,
-                expandedHeaderPadding: EdgeInsets.zero,
-                expansionCallback: (int index, bool isExpanded) {
-                  _toggleSecondOrder();
-                },
-                children: [
-                  ExpansionPanel(
-                    headerBuilder: (BuildContext context, bool isExpanded) {
-                      return ListTile(
-                        title: const Text('Second Part of Order'),
-                        trailing: Icon(
-                          _secondOrderExpanded
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                        ),
-                      );
-                    },
-                    body: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _secondOrderController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Item Name',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: _addSecondOrderItem,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          if (_secondOrderItems.isNotEmpty)
-                            Table(
-                              border: TableBorder.all(),
-                              children: [
-                                const TableRow(
-                                  decoration: BoxDecoration(color: Colors.grey),
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Item',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Qty',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Action',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                ..._secondOrderItems.map((item) {
-                                  return TableRow(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(item['name']),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          item['quantity'].toString(),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: IconButton(
-                                          icon: const Icon(Icons.delete),
-                                          onPressed: () {
-                                            setState(() {
-                                              _secondOrderItems.remove(item);
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                    isExpanded: _secondOrderExpanded,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Submit Button
-            ElevatedButton(
-              onPressed: () {
-                // Submit both orders
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Order submitted with ${_firstOrderItems.length + _secondOrderItems.length} items',
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange.shade700,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 16,
-                ),
-              ),
-              child: const Text('Submit Complete Order'),
             ),
           ],
         ),
