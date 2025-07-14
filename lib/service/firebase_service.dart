@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:food_order_system/modals/item_master_data.dart';
-import 'package:food_order_system/modals/supplier_master_data.dart';
-import 'package:food_order_system/modals/table_master_data.dart';
+import 'package:food_order_system/models/item_master_data.dart';
+import 'package:food_order_system/models/supplier_master_data.dart';
+import 'package:food_order_system/models/table_master_data.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

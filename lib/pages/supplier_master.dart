@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:food_order_system/authentication/auth_exception.dart';
 import 'package:food_order_system/authentication/auth_models.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
-import 'package:food_order_system/modals/supplier_master_data.dart';
+import 'package:food_order_system/models/supplier_master_data.dart';
 import 'package:food_order_system/service/firebase_service.dart';
 import 'package:go_router/go_router.dart';
 

@@ -8,7 +8,7 @@ import 'package:food_order_system/pages/admin_dashboard.dart';
 import 'package:food_order_system/pages/display_fetch_page.dart';
 import 'package:food_order_system/pages/item_master.dart';
 import 'package:food_order_system/pages/order_list.dart';
-import 'package:food_order_system/pages/order_master.dart';
+import 'package:food_order_system/pages/orders/order_master.dart';
 import 'package:food_order_system/pages/supplier_login.dart';
 import 'package:food_order_system/pages/supplier_master.dart';
 import 'package:food_order_system/pages/table_master.dart';

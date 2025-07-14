@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:food_order_system/modals/item_master_data.dart';
+import 'package:food_order_system/models/item_master_data.dart';
 import 'package:food_order_system/service/firebase_service.dart';
 import 'package:go_router/go_router.dart';
 
