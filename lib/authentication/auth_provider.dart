@@ -1,8 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:food_order_system/authentication/auth_exception.dart';
 import 'package:food_order_system/authentication/auth_models.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
+import 'package:food_order_system/authentication/auth_exception.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
@@ -27,12 +26,10 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _authService.authStateChanges.listen((User? firebaseUser) async {
-        if (firebaseUser != null) {
-          _currentUser = await _authService.getCurrentAuthUser();
-        } else {
-          _currentUser = null;
-        }
+      _authService.authStateChanges.listen((user) async {
+        _currentUser = user != null
+            ? await _authService.getCurrentAuthUser()
+            : null;
         _error = null;
         _isLoading = false;
         notifyListeners();
@@ -44,15 +41,15 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Authentication methods
-  Future<void> _handleAuthOperation(Future<AuthUser> Function() operation) async {
+  Future<void> _handleAuthOperation(
+    Future<AuthUser> Function() operation,
+  ) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       _currentUser = await operation();
-      _error = null;
     } on AuthException catch (e) {
       _error = e.message;
       rethrow;
@@ -62,49 +59,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> adminSignIn({required String email, required String password}) {
-    return _handleAuthOperation(
-      () => _authService.adminSignIn(email: email, password: password),
-    );
-  }
+  Future<void> adminSignIn({required String email, required String password}) =>
+      _handleAuthOperation(
+        () => _authService.adminSignIn(email: email, password: password),
+      );
 
-  Future<void> supplierSignIn({required String email, required String password}) {
-    return _handleAuthOperation(
-      () => _authService.supplierSignIn(email: email, password: password),
-    );
-  }
-
-  Future<void> createAdminAccount({
-    required String username,
+  Future<void> supplierSignIn({
     required String email,
     required String password,
-  }) {
-    return _handleAuthOperation(
-      () => _authService.createAdminAccount(
-        username: username,
-        email: email,
-        password: password,
-      ),
-    );
-  }
+  }) => _handleAuthOperation(
+    () => _authService.supplierSignIn(email: email, password: password),
+  );
 
-  Future<void> createSupplierAccount({
-    required String name,
-    required String email,
-    required String password,
-    required String mobileNumber,
-    String? supplierId,
-  }) {
-    return _handleAuthOperation(
-      () => _authService.createSupplierAccount(
-        name: name,
-        email: email,
-        password: password,
-        mobileNumber: mobileNumber,
-        supplierId: supplierId,
-      ),
-    );
-  }
+  Future<void> createAdminAccount(AdminSignUpData data) =>
+      _handleAuthOperation(() => _authService.createAdminAccount(data));
+
+  Future<void> createSupplierAccount(SupplierSignUpData data) =>
+      _handleAuthOperation(() => _authService.createSupplierAccount(data));
 
   Future<void> signOut() async {
     await _authService.signOut();
@@ -113,12 +84,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> deleteAccount({required String currentPassword}) async {
-    await _handleAuthOperation(
-      () async {
-        await _authService.deleteAccount(currentPassword: currentPassword);
-        return Future.error('User deleted'); // Won't actually return
-      },
-    );
+    await _handleAuthOperation(() async {
+      await _authService.deleteAccount(currentPassword: currentPassword);
+      throw AuthException(
+        code: 'user-deleted',
+        message: 'User account deleted',
+      );
+    });
     _currentUser = null;
   }
 

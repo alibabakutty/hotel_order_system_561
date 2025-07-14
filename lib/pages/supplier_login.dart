@@ -1,5 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:food_order_system/authentication/auth_exception.dart';
+import 'package:food_order_system/authentication/auth_service.dart';
+import 'package:go_router/go_router.dart';
 
 class SupplierLogin extends StatefulWidget {
   const SupplierLogin({super.key});
@@ -15,7 +17,7 @@ class _SupplierLoginState extends State<SupplierLogin> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  // final AuthService _auth = AuthService(); // Instance of Auth class
+  final AuthService _auth = AuthService();
 
   @override
   void dispose() {
@@ -24,12 +26,59 @@ class _SupplierLoginState extends State<SupplierLogin> {
     super.dispose();
   }
 
-  Future<void> _submitForm() async {}
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
+      try {
+        await _auth.supplierSignIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        // On successful login, navigate to supplier dashboard
+        if (mounted) {
+          context.go('/order_master');
+        }
+      } on AuthException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'An unexpected error occurred. Please try again.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Supplier Login')),
+      appBar: AppBar(
+        title: const Text('Supplier Login'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -163,10 +212,18 @@ class _SupplierLoginState extends State<SupplierLogin> {
                               ),
                       ),
                     ),
+                    // const SizedBox(height: 16),
+                    // // Sign up button
+                    // TextButton(
+                    //   onPressed: () => context.go('/supplier_signup'),
+                    //   child: const Text(
+                    //     "Don't have an account? Register here",
+                    //     style: TextStyle(color: Colors.blue),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -184,21 +241,51 @@ class _SupplierLoginState extends State<SupplierLogin> {
       );
       return;
     }
-    try {
-      // await _auth.resetPassword(email: _emailController.text.trim());
+
+    final email = _emailController.text.trim();
+
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset email sent!')),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.message ?? 'An error occurred. Please try again.',
-            style: const TextStyle(fontSize: 16),
-          ),
+        const SnackBar(
+          content: Text('Please enter a valid email address'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // await _auth.sendPasswordResetEmail(email: email);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Password reset email sent to $email'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to send reset email. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

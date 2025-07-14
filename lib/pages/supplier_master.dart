@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:food_order_system/authentication/auth_exception.dart';
+import 'package:food_order_system/authentication/auth_models.dart';
+import 'package:food_order_system/authentication/auth_service.dart';
 import 'package:food_order_system/modals/supplier_master_data.dart';
 import 'package:food_order_system/service/firebase_service.dart';
 import 'package:go_router/go_router.dart';
@@ -148,6 +151,17 @@ class _SupplierMasterState extends State<SupplierMaster> {
             return;
           }
 
+          // create auth account first
+          final authService = AuthService();
+          await authService.createSupplierAccount(
+            SupplierSignUpData(
+              email: supplierData.email,
+              password: supplierData.password,
+              name: supplierData.supplierName,
+              mobileNumber: supplierData.mobileNumber,
+            ),
+          );
+
           success = await firebaseService.addSupplierMasterData(supplierData);
         }
 
@@ -176,6 +190,12 @@ class _SupplierMasterState extends State<SupplierMaster> {
               context.go('/cda_page', extra: 'supplier');
             }
           }
+        }
+      } on AuthException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+          );
         }
       } catch (e) {
         if (mounted) {

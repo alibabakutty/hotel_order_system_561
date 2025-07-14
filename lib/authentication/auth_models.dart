@@ -1,37 +1,34 @@
+enum UserRole { user, admin, supplier }
+
 class AuthUser {
   final String uid;
   final String? username;
+  final String? supplierName;
   final String? email;
   final String? mobileNumber;
   final UserRole role;
-  final String? supplierId;
 
   AuthUser({
     required this.uid,
     this.username,
+    this.supplierName,
     this.email,
     this.mobileNumber,
     this.role = UserRole.user,
-    this.supplierId,
   });
 
-  factory AuthUser.fromAdmin(Map<String, dynamic> data, String uid) {
+  factory AuthUser.fromMap(
+    Map<String, dynamic> data,
+    String uid,
+    UserRole role,
+  ) {
     return AuthUser(
       uid: uid,
       username: data['username'],
+      supplierName: data['supplierName'] ?? data['name'],
       email: data['email'],
-      role: UserRole.admin,
-    );
-  }
-
-  factory AuthUser.fromSupplier(Map<String, dynamic> data, String uid) {
-    return AuthUser(
-      uid: uid,
-      username: data['name'],
-      email: data['email'],
-      mobileNumber: data['mobile_number'],
-      role: UserRole.supplier,
-      supplierId: data['supplier_id'] ?? uid,
+      mobileNumber: data['mobileNumber'] ?? data['mobile_number'],
+      role: role,
     );
   }
 
@@ -40,4 +37,36 @@ class AuthUser {
   bool get isRegularUser => role == UserRole.user;
 }
 
-enum UserRole { user, admin, supplier }
+class SignUpCredentials {
+  final String email;
+  final String password;
+  final UserRole role;
+
+  SignUpCredentials({
+    required this.email,
+    required this.password,
+    required this.role,
+  });
+}
+
+class AdminSignUpData extends SignUpCredentials {
+  final String username;
+
+  AdminSignUpData({
+    required String email,
+    required String password,
+    required this.username,
+  }) : super(email: email, password: password, role: UserRole.admin);
+}
+
+class SupplierSignUpData extends SignUpCredentials {
+  final String name;
+  final String mobileNumber;
+
+  SupplierSignUpData({
+    required String email,
+    required String password,
+    required this.name,
+    required this.mobileNumber,
+  }) : super(email: email, password: password, role: UserRole.supplier);
+}

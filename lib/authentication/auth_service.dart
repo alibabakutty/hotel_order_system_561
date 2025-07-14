@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:food_order_system/authentication/auth_exception.dart';
 import 'package:food_order_system/authentication/auth_models.dart';
 import 'package:food_order_system/authentication/auth_repository.dart';
+import 'package:food_order_system/authentication/auth_exception.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth;
@@ -18,16 +18,11 @@ class AuthService {
 
   Future<AuthUser> getCurrentAuthUser() async {
     final user = _firebaseAuth.currentUser;
-    if (user == null) {
-      throw AuthException(
-        code: 'no-user',
-        message: 'No user is currently signed in',
-      );
-    }
+    if (user == null) throw AuthException(code: 'no-user', message: AuthErrorMessages.getMessage('no-user'));
     return _authRepository.getAuthUser(user.uid);
   }
 
-  Future<AuthUser> _signInWithEmailAndPassword({
+  Future<AuthUser> _signInWithRole({
     required String email,
     required String password,
     required UserRole expectedRole,
@@ -39,7 +34,7 @@ class AuthService {
       if (email.isEmpty || password.isEmpty) {
         throw AuthException(
           code: 'empty-credentials',
-          message: 'Email and password cannot be empty',
+          message: AuthErrorMessages.getMessage('empty-credentials'),
         );
       }
 
@@ -52,17 +47,16 @@ class AuthService {
       if (user == null) {
         throw AuthException(
           code: 'no-user',
-          message: 'Authentication succeeded but no user returned',
+          message: AuthErrorMessages.getMessage('no-user'),
         );
       }
 
       final authUser = await _authRepository.getAuthUser(user.uid);
-      
       if (authUser.role != expectedRole) {
         await _firebaseAuth.signOut();
         throw AuthException(
           code: 'wrong-role',
-          message: 'This account does not have the required permissions',
+          message: AuthErrorMessages.getMessage('wrong-role'),
         );
       }
 
@@ -78,50 +72,43 @@ class AuthService {
   Future<AuthUser> adminSignIn({
     required String email,
     required String password,
-  }) async {
-    return _signInWithEmailAndPassword(
-      email: email,
-      password: password,
-      expectedRole: UserRole.admin,
-    );
-  }
+  }) async => _signInWithRole(
+        email: email,
+        password: password,
+        expectedRole: UserRole.admin,
+      );
 
   Future<AuthUser> supplierSignIn({
     required String email,
     required String password,
-  }) async {
-    return _signInWithEmailAndPassword(
-      email: email,
-      password: password,
-      expectedRole: UserRole.supplier,
-    );
-  }
-
-  Future<AuthUser> createAdminAccount({
-    required String username,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+  }) async => _signInWithRole(
         email: email,
         password: password,
+        expectedRole: UserRole.supplier,
+      );
+
+  Future<AuthUser> _createUserWithRole(SignUpCredentials credentials, Map<String, dynamic> additionalData) async {
+    try {
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: credentials.email,
+        password: credentials.password,
       );
 
       final user = userCredential.user!;
       
-      await _authRepository.createAdminRecord(
+      await _authRepository.createUserRecord(
         uid: user.uid,
-        username: username,
-        email: email,
+        data: {
+          'email': credentials.email,
+          ...additionalData,
+        },
+        role: credentials.role,
       );
 
-      return AuthUser.fromAdmin(
-        {
-          'username': username,
-          'email': email,
-        },
+      return AuthUser.fromMap(
+        additionalData,
         user.uid,
+        credentials.role,
       );
     } on FirebaseAuthException catch (e) {
       throw AuthException(
@@ -131,65 +118,33 @@ class AuthService {
     }
   }
 
-  Future<AuthUser> createSupplierAccount({
-    required String name,
-    required String email,
-    required String password,
-    required String mobileNumber,
-    String? supplierId,
-  }) async {
-    try {
-      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
+  Future<AuthUser> createAdminAccount(AdminSignUpData data) async =>
+      await _createUserWithRole(
+        data,
+        {'username': data.username},
       );
 
-      final user = userCredential.user!;
-      
-      await _authRepository.createSupplierRecord(
-        uid: user.uid,
-        name: name,
-        email: email,
-        mobileNumber: mobileNumber,
-        supplierId: supplierId,
-      );
-
-      return AuthUser.fromSupplier(
+  Future<AuthUser> createSupplierAccount(SupplierSignUpData data) async =>
+      await _createUserWithRole(
+        data,
         {
-          'name': name,
-          'email': email,
-          'mobile_number': mobileNumber,
-          'supplier_id': supplierId ?? user.uid,
+          'name': data.name,
+          'mobileNumber': data.mobileNumber,
         },
-        user.uid,
       );
-    } on FirebaseAuthException catch (e) {
-      throw AuthException(
-        code: e.code,
-        message: AuthErrorMessages.getMessage(e.code),
-      );
-    }
-  }
 
-  Future<void> signOut() async {
-    await _firebaseAuth.signOut();
-  }
+  Future<void> signOut() async => await _firebaseAuth.signOut();
 
   Future<void> deleteAccount({required String currentPassword}) async {
     final user = _firebaseAuth.currentUser;
-    if (user == null) {
-      throw AuthException(
-        code: 'no-user',
-        message: 'No user is currently signed in',
-      );
-    }
+    if (user == null) throw AuthException(code: 'no-user', message: AuthErrorMessages.getMessage('no-user'));
 
     try {
       final credential = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
       );
-      
+
       await user.reauthenticateWithCredential(credential);
       await _authRepository.deleteUserRecord(user.uid);
       await user.delete();

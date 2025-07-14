@@ -5,7 +5,6 @@ class SupplierMasterData {
   final String mobileNumber;
   final String email;
   final String password;
-  final bool isAdmin;
   final Timestamp createdAt;
 
   SupplierMasterData({
@@ -13,7 +12,6 @@ class SupplierMasterData {
     required this.mobileNumber,
     required this.email,
     required this.password,
-    this.isAdmin = false,
     required this.createdAt,
   });
 
@@ -24,7 +22,6 @@ class SupplierMasterData {
       mobileNumber: data['mobile_number'] ?? '',
       email: data['email'] ?? '',
       password: data['password'] ?? '',
-      isAdmin: data['is_admin'] ?? false,
       createdAt: data['created_at'] ?? Timestamp.now(),
     );
   }
@@ -36,7 +33,6 @@ class SupplierMasterData {
       'mobile_number': mobileNumber,
       'email': email,
       'password': password,
-      'is_admin': isAdmin,
       'created_at': createdAt,
     };
   }

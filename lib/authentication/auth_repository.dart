@@ -8,34 +8,26 @@ class AuthRepository {
   AuthRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
+  Future<AuthUser> _getUserFromCollection(
+    String collection,
+    String uid,
+    UserRole role,
+  ) async {
+    final doc = await _firestore.collection(collection).doc(uid).get();
+    if (!doc.exists) return Future.error('User not found in $collection');
+    return AuthUser.fromMap(doc.data()!, uid, role);
+  }
+
   Future<AuthUser> getAuthUser(String uid) async {
     try {
-      // Check admin collection first
-      final adminDoc = await _firestore.collection('admins').doc(uid).get();
-      if (adminDoc.exists) {
-        return AuthUser.fromAdmin(adminDoc.data()!, uid);
-      }
-
-      // Check supplier collection
-      final supplierDoc = await _firestore.collection('suppliers').doc(uid).get();
-      if (supplierDoc.exists) {
-        return AuthUser.fromSupplier(supplierDoc.data()!, uid);
-      }
-
-      // If not found in either, return basic user
-      final userDoc = await _firestore.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        return AuthUser(
-          uid: uid,
-          email: userDoc.data()?['email'],
-          role: UserRole.user,
-        );
-      }
-
-      throw AuthException(
-        code: 'user-not-found',
-        message: 'User document not found in any collection',
-      );
+      return await _getUserFromCollection('admins', uid, UserRole.admin)
+          .onError(
+            (_, __) =>
+                _getUserFromCollection('suppliers', uid, UserRole.supplier),
+          )
+          .onError(
+            (_, __) => _getUserFromCollection('users', uid, UserRole.user),
+          );
     } on FirebaseException catch (e) {
       throw AuthException(
         code: e.code,
@@ -44,46 +36,27 @@ class AuthRepository {
     }
   }
 
-  Future<void> createAdminRecord({
+  Future<void> createUserRecord({
     required String uid,
-    required String username,
-    required String email,
+    required Map<String, dynamic> data,
+    required UserRole role,
   }) async {
     try {
-      await _firestore.collection('admins').doc(uid).set({
-        'username': username,
-        'email': email,
-        'created_at': FieldValue.serverTimestamp(),
-        'last_login': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      throw AuthException(
-        code: e.code,
-        message: 'Failed to create admin record: ${e.message}',
-      );
-    }
-  }
+      final collection = role == UserRole.admin
+          ? 'admins'
+          : role == UserRole.supplier
+          ? 'suppliers'
+          : 'users';
 
-  Future<void> createSupplierRecord({
-    required String uid,
-    required String name,
-    required String email,
-    required String mobileNumber,
-    String? supplierId,
-  }) async {
-    try {
-      await _firestore.collection('suppliers').doc(uid).set({
-        'name': name,
-        'email': email,
-        'mobile_number': mobileNumber,
-        'supplier_id': supplierId ?? uid,
+      await _firestore.collection(collection).doc(uid).set({
+        ...data,
         'created_at': FieldValue.serverTimestamp(),
         'last_login': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
       throw AuthException(
         code: e.code,
-        message: 'Failed to create supplier record: ${e.message}',
+        message: 'Failed to create user record: ${e.message}',
       );
     }
   }

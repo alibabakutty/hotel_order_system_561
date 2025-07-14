@@ -54,6 +54,12 @@ final _router = GoRouter(
           ),
         ),
         GoRoute(
+          path: '/order_master',
+          builder: (context, state) => OrderMaster(
+            authService: Provider.of<AuthService>(context, listen: false),
+          ),
+        ),
+        GoRoute(
           path: '/cda_page',
           builder: (context, state) {
             final masterType = state.extra as String;
@@ -104,10 +110,6 @@ final _router = GoRouter(
               isDisplayMode: args['isDisplayMode'] ?? false,
             );
           },
-        ),
-        GoRoute(
-          path: '/order_master',
-          builder: (context, state) => const OrderMaster(),
         ),
         GoRoute(
           path: '/order_list',

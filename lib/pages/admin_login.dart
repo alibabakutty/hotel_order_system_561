@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_order_system/authentication/auth_exception.dart';
+import 'package:food_order_system/authentication/auth_models.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,9 +38,11 @@ class _AdminLoginState extends State<AdminLogin> {
         if (_isSignUp) {
           // Create new admin account using the new method
           await _auth.createAdminAccount(
-            username: _usernameController.text.trim(),
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
+            AdminSignUpData(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+              username: _usernameController.text.trim(),
+            ),
           );
         } else {
           // Sign in existing admin using the new method
