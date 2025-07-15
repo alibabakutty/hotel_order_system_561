@@ -13,6 +13,15 @@ class OrderItem {
     required this.quantity,
   });
 
+  // Add this empty constructor
+  factory OrderItem.empty() => OrderItem(
+    itemCode: '',
+    itemName: '',
+    itemAmount: 0.0,
+    itemStatus: true,
+    quantity: 1,
+  );
+
   Map<String, dynamic> toMap() {
     return {
       'itemCode': itemCode,

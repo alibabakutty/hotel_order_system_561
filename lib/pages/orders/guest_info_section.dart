@@ -6,7 +6,7 @@ class GuestInfoSection extends StatefulWidget {
   final TextEditingController femaleController;
   final TextEditingController kidsController;
   final Function() onDistributePressed;
-  final Function() onTableAllocatePressed; // New callback for table allocate
+  final Function() onTableAllocatePressed;
 
   const GuestInfoSection({
     super.key,
@@ -15,7 +15,7 @@ class GuestInfoSection extends StatefulWidget {
     required this.femaleController,
     required this.kidsController,
     required this.onDistributePressed,
-    required this.onTableAllocatePressed, // Add this parameter
+    required this.onTableAllocatePressed,
   });
 
   @override
@@ -39,7 +39,21 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
             const SizedBox(height: 16),
             Row(
               children: [
-                // Total Members input field
+                // Table Allocate button (first)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: widget.onTableAllocatePressed,
+                    icon: const Icon(Icons.table_restaurant),
+                    label: const Text('Allocate Table'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Total Members input field (middle)
                 Expanded(
                   child: TextFormField(
                     controller: widget.quantityController,
@@ -66,28 +80,14 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
                 ),
                 const SizedBox(width: 8),
 
-                // Guest Checkin button
+                // Guest Checkin button (last)
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: widget.onDistributePressed,
                     icon: const Icon(Icons.group_add),
-                    label: const Text('Guest Checkin'),
+                    label: const Text('Check-in'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange.shade700,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Table Allocate button
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: widget.onTableAllocatePressed,
-                    icon: const Icon(Icons.table_restaurant),
-                    label: const Text('Table Allocate'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
