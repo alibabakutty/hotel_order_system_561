@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_order_system/authentication/auth_models.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
 import 'package:food_order_system/models/order_item_data.dart';
+import 'package:food_order_system/models/table_master_data.dart';
 import 'package:food_order_system/pages/orders/allocate_table_section.dart';
 import 'package:food_order_system/pages/orders/guest_info_section.dart';
 import 'package:food_order_system/pages/orders/order_items_table.dart';
@@ -31,8 +32,6 @@ class _OrderMasterState extends State<OrderMaster> {
   // Controllers
   final _formKey = GlobalKey<FormState>();
   final _serialNoController = TextEditingController();
-  final _tableNoController = TextEditingController();
-  final _tableCapacityController = TextEditingController();
   final _supplierNameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _amountController = TextEditingController();
@@ -40,7 +39,9 @@ class _OrderMasterState extends State<OrderMaster> {
   final _femaleController = TextEditingController();
   final _kidsController = TextEditingController();
 
+  // For table allocation
   bool _showTableAllocation = false;
+  List<TableMasterData> _selectedTables = [];
 
   @override
   void initState() {
@@ -237,6 +238,19 @@ class _OrderMasterState extends State<OrderMaster> {
           .map((item) => item.toMap())
           .toList();
 
+      // Show selected tables info if any
+      if (_selectedTables.isNotEmpty) {
+        final tablesInfo = _selectedTables
+            .map((t) => 'Table ${t.tableNumber} (${t.tableCapacity})')
+            .join(', ');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tables: $tablesInfo'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Order submitted with ${items.length} items'),
@@ -255,6 +269,7 @@ class _OrderMasterState extends State<OrderMaster> {
             quantity: 1,
           ),
         ];
+        _selectedTables.clear();
       });
     }
   }
@@ -265,21 +280,17 @@ class _OrderMasterState extends State<OrderMaster> {
     });
   }
 
-  void _confirmTableAllocation() {
-    if (_tableNoController.text.isNotEmpty &&
-        _tableCapacityController.text.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Table ${_tableNoController.text} allocated (Capacity: ${_tableCapacityController.text})',
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-      setState(() {
-        _showTableAllocation = false;
-      });
-    }
+  void _onTablesSelected(List<TableMasterData> selectedTables) {
+    setState(() {
+      _selectedTables = selectedTables;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Selected ${selectedTables.length} table(s)'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   @override
@@ -369,9 +380,9 @@ class _OrderMasterState extends State<OrderMaster> {
               if (_showTableAllocation) ...[
                 const SizedBox(height: 16),
                 AllocateTableSection(
-                  tableNoController: _tableNoController,
-                  tableCapacityController: _tableCapacityController,
-                  onTableAllocated: _confirmTableAllocation,
+                  quantityController: _quantityController,
+                  selectedTables: _selectedTables,
+                  onTablesSelected: _onTablesSelected,
                 ),
               ],
               const SizedBox(height: 24),
@@ -407,8 +418,6 @@ class _OrderMasterState extends State<OrderMaster> {
   @override
   void dispose() {
     _serialNoController.dispose();
-    _tableNoController.dispose();
-    _tableCapacityController.dispose();
     _supplierNameController.dispose();
     _quantityController.dispose();
     _amountController.dispose();

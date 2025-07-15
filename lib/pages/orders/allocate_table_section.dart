@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:food_order_system/models/table_master_data.dart';
+import 'package:food_order_system/service/firebase_service.dart';
 
 class AllocateTableSection extends StatefulWidget {
-  final TextEditingController tableNoController;
-  final TextEditingController tableCapacityController;
-  final Function() onTableAllocated;
+  final TextEditingController quantityController;
+  final List<TableMasterData> selectedTables;
+  final Function(List<TableMasterData>) onTablesSelected;
 
   const AllocateTableSection({
     super.key,
-    required this.tableNoController,
-    required this.tableCapacityController,
-    required this.onTableAllocated,
+    required this.quantityController,
+    required this.selectedTables,
+    required this.onTablesSelected,
   });
 
   @override
@@ -18,6 +20,132 @@ class AllocateTableSection extends StatefulWidget {
 
 class _AllocateTableSectionState extends State<AllocateTableSection> {
   final _formKey = GlobalKey<FormState>();
+  final FirebaseService _firebaseService = FirebaseService();
+  List<TableMasterData> _availableTables = [];
+  bool _isLoadingTables = false;
+  int _totalCapacity = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableTables();
+    widget.quantityController.addListener(_updateTotalMembers);
+  }
+
+  @override
+  void dispose() {
+    widget.quantityController.removeListener(_updateTotalMembers);
+    super.dispose();
+  }
+
+  void _updateTotalMembers() {
+    setState(() {
+      // Recalculate required capacity when total members changes
+    });
+  }
+
+  Future<void> _loadAvailableTables() async {
+    setState(() {
+      _isLoadingTables = true;
+    });
+    try {
+      final tables = await _firebaseService.getAllTables();
+      setState(() {
+        _availableTables = tables
+            .where((table) => table.tableAvailability)
+            .toList();
+      });
+    } catch (e) {
+      debugPrint('Error loading tables: $e');
+    } finally {
+      setState(() {
+        _isLoadingTables = false;
+      });
+    }
+  }
+
+  void _showTableSelectionDialog(BuildContext context) {
+    final totalMembers = int.tryParse(widget.quantityController.text) ?? 0;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Tables'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Total Members: $totalMembers'),
+                  Text(
+                    'Selected Capacity: $_totalCapacity/${totalMembers > 0 ? totalMembers : '?'}',
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isLoadingTables)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_availableTables.isEmpty)
+                    const Text('No available tables')
+                  else
+                    SizedBox(
+                      height: 300,
+                      width: double.maxFinite,
+                      child: ListView.builder(
+                        itemCount: _availableTables.length,
+                        itemBuilder: (context, index) {
+                          final table = _availableTables[index];
+                          final isSelected = widget.selectedTables.any(
+                            (t) => t.tableNumber == table.tableNumber,
+                          );
+
+                          return CheckboxListTile(
+                            value: isSelected,
+                            onChanged: (bool? selected) {
+                              setState(() {
+                                if (selected == true) {
+                                  widget.selectedTables.add(table);
+                                  _totalCapacity += table.tableCapacity;
+                                } else {
+                                  widget.selectedTables.removeWhere(
+                                    (t) => t.tableNumber == table.tableNumber,
+                                  );
+                                  _totalCapacity -= table.tableCapacity;
+                                }
+                              });
+                            },
+                            title: Text('Table ${table.tableNumber}'),
+                            subtitle: Text('Capacity: ${table.tableCapacity}'),
+                            secondary: table.tableAvailability
+                                ? const Icon(Icons.check, color: Colors.green)
+                                : const Icon(Icons.close, color: Colors.red),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: _totalCapacity >= totalMembers
+                      ? () {
+                          widget.onTablesSelected(widget.selectedTables);
+                          Navigator.pop(context);
+                        }
+                      : null,
+                  child: const Text('Confirm Selection'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,37 +165,15 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  // Table Number input field
+                  // Total Members input field
                   Expanded(
+                    flex: 2,
                     child: TextFormField(
-                      controller: widget.tableNoController,
+                      controller: widget.quantityController,
                       decoration: const InputDecoration(
-                        labelText: 'Table Number',
+                        labelText: 'Total Members',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.table_restaurant),
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 12,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Required';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  
-                  // Table Capacity input field
-                  Expanded(
-                    child: TextFormField(
-                      controller: widget.tableCapacityController,
-                      decoration: const InputDecoration(
-                        labelText: 'Table Capacity',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.people_outline),
+                        prefixIcon: Icon(Icons.people),
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 12,
                           horizontal: 12,
@@ -86,24 +192,49 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  
-                  // Allocate Table button
+
+                  // Selected tables info
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          widget.onTableAllocated();
-                        }
-                      },
-                      icon: const Icon(Icons.check),
-                      label: const Text('Allocate'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade700,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.selectedTables.isNotEmpty) ...[
+                          Text(
+                            'Selected Tables: ${widget.selectedTables.map((t) => t.tableNumber).join(', ')}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          Text(
+                            'Total Capacity: ${widget.selectedTables.fold(0, (sum, table) => sum + table.tableCapacity)}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ] else
+                          const Text(
+                            'No tables selected',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                      ],
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _showTableSelectionDialog(context);
+                    }
+                  },
+                  icon: const Icon(Icons.table_restaurant),
+                  label: const Text('Select Tables'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 24,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

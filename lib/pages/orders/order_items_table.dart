@@ -95,257 +95,266 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowColor: MaterialStateProperty.resolveWith<Color?>(
-                  (Set<MaterialState> states) => Colors.grey[100],
-                ),
-                columns: const [
-                  DataColumn(
-                    label: SizedBox(
-                      width: 100,
-                      child: Text(
-                        'Item Code',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+            // Table with vertical and horizontal scrolling
+            SizedBox(
+              height: 400, // Fixed height with scrolling
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: MaterialStateProperty.resolveWith<Color?>(
+                      (Set<MaterialState> states) => Colors.grey[100],
                     ),
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 150,
-                      child: Text(
-                        'Item Name',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 150,
-                      child: Text(
-                        'Quantity',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    numeric: true,
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 100,
-                      child: Text(
-                        'Amount',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    numeric: true,
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 70,
-                      child: Text(
-                        'Status',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: SizedBox(
-                      width: 80,
-                      child: Text(
-                        'Remove',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-
-                rows: List<DataRow>.generate(widget.orderItems.length, (index) {
-                  final item = widget.orderItems[index];
-                  return DataRow(
-                    cells: [
-                      DataCell(
-                        SizedBox(
+                    columns: const [
+                      DataColumn(
+                        label: SizedBox(
                           width: 100,
-                          child: TextFormField(
-                            controller: codeControllers[index],
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                            ),
-                            onChanged: (value) => item.itemCode = value,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Required';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 150,
-                          child: TextFormField(
-                            controller: nameControllers[index],
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                            ),
-                            onChanged: (value) => item.itemName = value,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Required';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 150, // Increased width to accommodate buttons
-                          child: Row(
-                            children: [
-                              // Minus button
-                              IconButton(
-                                icon: const Icon(Icons.remove),
-                                onPressed: () {
-                                  setState(() {
-                                    if (item.quantity > 1) {
-                                      item.quantity--;
-                                      qtyControllers[index].text = item.quantity
-                                          .toString();
-                                    }
-                                  });
-                                },
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Colors.grey[200],
-                                  padding: const EdgeInsets.all(4),
-                                ),
-                              ),
-                              // Quantity input field
-                              Expanded(
-                                child: TextFormField(
-                                  controller: qtyControllers[index],
-                                  keyboardType: TextInputType.number,
-                                  textAlign: TextAlign.center,
-                                  decoration: const InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                  onChanged: (value) {
-                                    item.quantity = int.tryParse(value) ?? 1;
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    if (int.tryParse(value) == null) {
-                                      return 'Invalid';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              // Plus button
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: () {
-                                  setState(() {
-                                    item.quantity++;
-                                    qtyControllers[index].text = item.quantity
-                                        .toString();
-                                  });
-                                },
-                                style: IconButton.styleFrom(
-                                  backgroundColor: Colors.grey[200],
-                                  padding: const EdgeInsets.all(4),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 100,
-                          child: TextFormField(
-                            controller: amountControllers[index],
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              prefixText: '\₹',
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                            ),
-                            onChanged: (value) {
-                              item.itemAmount = double.tryParse(value) ?? 0.0;
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Required';
-                              }
-                              if (double.tryParse(value) == null) {
-                                return 'Invalid';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: item.itemStatus
-                                ? Colors.green.withOpacity(0.2)
-                                : Colors.orange.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
                           child: Text(
-                            item.itemStatus ? 'Available' : 'Unavailable',
-                            style: TextStyle(
-                              color: item.itemStatus
-                                  ? Colors.green.shade800
-                                  : Colors.orange.shade800,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            'Item Code',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
-                      DataCell(
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.delete, size: 20),
-                              color: Colors.grey,
-                              onPressed: () => widget.onDeleteItem(index),
-                            ),
-                          ],
+                      DataColumn(
+                        label: SizedBox(
+                          width: 150,
+                          child: Text(
+                            'Item Name',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: 150,
+                          child: Text(
+                            'Quantity',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        numeric: true,
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: 100,
+                          child: Text(
+                            'Amount',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        numeric: true,
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: 70,
+                          child: Text(
+                            'Status',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: 80,
+                          child: Text(
+                            'Remove',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ],
-                  );
-                }),
+                    rows: List<DataRow>.generate(widget.orderItems.length, (
+                      index,
+                    ) {
+                      final item = widget.orderItems[index];
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            SizedBox(
+                              width: 100,
+                              child: TextFormField(
+                                controller: codeControllers[index],
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onChanged: (value) => item.itemCode = value,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 150,
+                              child: TextFormField(
+                                controller: nameControllers[index],
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onChanged: (value) => item.itemName = value,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 150,
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.remove),
+                                    onPressed: () {
+                                      setState(() {
+                                        if (item.quantity > 1) {
+                                          item.quantity--;
+                                          qtyControllers[index].text = item
+                                              .quantity
+                                              .toString();
+                                        }
+                                      });
+                                    },
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.grey[200],
+                                      padding: const EdgeInsets.all(4),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: qtyControllers[index],
+                                      keyboardType: TextInputType.number,
+                                      textAlign: TextAlign.center,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 8,
+                                        ),
+                                      ),
+                                      onChanged: (value) {
+                                        item.quantity =
+                                            int.tryParse(value) ?? 1;
+                                      },
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Required';
+                                        }
+                                        if (int.tryParse(value) == null) {
+                                          return 'Invalid';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () {
+                                      setState(() {
+                                        item.quantity++;
+                                        qtyControllers[index].text = item
+                                            .quantity
+                                            .toString();
+                                      });
+                                    },
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.grey[200],
+                                      padding: const EdgeInsets.all(4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: 100,
+                              child: TextFormField(
+                                controller: amountControllers[index],
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  prefixText: '\₹',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  item.itemAmount =
+                                      double.tryParse(value) ?? 0.0;
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Required';
+                                  }
+                                  if (double.tryParse(value) == null) {
+                                    return 'Invalid';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: item.itemStatus
+                                    ? Colors.green.withOpacity(0.2)
+                                    : Colors.orange.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.itemStatus ? 'Available' : 'Unavailable',
+                                style: TextStyle(
+                                  color: item.itemStatus
+                                      ? Colors.green.shade800
+                                      : Colors.orange.shade800,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 20),
+                                  color: Colors.grey,
+                                  onPressed: () => widget.onDeleteItem(index),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
