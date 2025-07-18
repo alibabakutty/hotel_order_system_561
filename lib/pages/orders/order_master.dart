@@ -673,7 +673,10 @@ class _OrderMasterState extends State<OrderMaster> {
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       onPressed: () => setState(
-                                        () => orderItems.add(OrderItem.empty()),
+                                        () => orderItems.insert(
+                                          0,
+                                          OrderItem.empty(),
+                                        ),
                                       ),
                                       icon: const Icon(Icons.add),
                                       label: const Text('Add Item'),
