@@ -9,6 +9,18 @@ import 'package:food_order_system/pages/orders/guest_info_section.dart';
 import 'package:food_order_system/service/firebase_service.dart';
 import 'package:go_router/go_router.dart';
 
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+}
+
 class OrderMaster extends StatefulWidget {
   final AuthService authService;
   const OrderMaster({super.key, required this.authService});
@@ -298,7 +310,7 @@ class _OrderMasterState extends State<OrderMaster> {
   Widget _buildOrderItemRow(int index, OrderItem item) {
     final combinedController = TextEditingController(
       text: item.itemCode.isNotEmpty
-          ? '${item.itemCode} - ${item.itemName}'
+          ? '${item.itemCode} - ${item.itemName.capitalize()}'
           : '',
     );
     final focusNode = FocusNode();
@@ -331,13 +343,13 @@ class _OrderMasterState extends State<OrderMaster> {
                 setState(() {
                   orderItems[index] = OrderItem(
                     itemCode: selection.itemCode.toString(),
-                    itemName: selection.itemName,
+                    itemName: selection.itemName.capitalize(),
                     itemAmount: selection.itemAmount,
                     itemStatus: selection.itemStatus,
                     quantity: orderItems[index].quantity,
                   );
                   combinedController.text =
-                      '${selection.itemCode} - ${selection.itemName}';
+                      '${selection.itemCode} - ${selection.itemName.capitalize()}';
                 });
               },
               fieldViewBuilder:
@@ -374,7 +386,7 @@ class _OrderMasterState extends State<OrderMaster> {
                               final item = options.elementAt(index);
                               return ListTile(
                                 title: Text(
-                                  '${item.itemCode} - ${item.itemName}',
+                                  '${item.itemCode} - ${item.itemName.capitalize()}',
                                 ),
                                 subtitle: Text('₹${item.itemAmount}'),
                                 onTap: () => onSelected(item),
