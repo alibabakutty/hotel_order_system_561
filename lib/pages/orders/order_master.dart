@@ -296,23 +296,36 @@ class _OrderMasterState extends State<OrderMaster> {
       name.length <= 12 ? name : '${name.substring(0, 12)}...';
 
   Widget _buildOrderItemRow(int index, OrderItem item) {
-    // create controllers and focus nodes for each row
-    final textEditingController = TextEditingController(text: item.itemCode);
+    final combinedController = TextEditingController(
+      text: item.itemCode.isNotEmpty
+          ? '${item.itemCode} - ${item.itemName}'
+          : '',
+    );
     final focusNode = FocusNode();
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
+      width: 1000, // Reduced width since we combined two fields
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
+          // Combined Item Code and Name
+          SizedBox(
+            width: 450, // Wider to accommodate both code and name
             child: RawAutocomplete<ItemMasterData>(
               focusNode: focusNode,
-              textEditingController: textEditingController,
+              textEditingController: combinedController,
               optionsBuilder: (TextEditingValue textEditingValue) {
                 return _isLoadingItems
                     ? const Iterable<ItemMasterData>.empty()
-                    : _allItems;
+                    : _allItems.where(
+                        (item) =>
+                            item.itemCode.toString().contains(
+                              textEditingValue.text,
+                            ) ||
+                            item.itemName.toLowerCase().contains(
+                              textEditingValue.text.toLowerCase(),
+                            ),
+                      );
               },
               onSelected: (ItemMasterData selection) {
                 setState(() {
@@ -323,7 +336,8 @@ class _OrderMasterState extends State<OrderMaster> {
                     itemStatus: selection.itemStatus,
                     quantity: orderItems[index].quantity,
                   );
-                  textEditingController.text = selection.itemCode.toString();
+                  combinedController.text =
+                      '${selection.itemCode} - ${selection.itemName}';
                 });
               },
               fieldViewBuilder:
@@ -337,8 +351,9 @@ class _OrderMasterState extends State<OrderMaster> {
                       controller: controller,
                       focusNode: node,
                       decoration: const InputDecoration(
-                        labelText: 'Item Code',
+                        labelText: 'Item Code - Name',
                         border: OutlineInputBorder(),
+                        hintText: 'Search by code or name',
                       ),
                       onTap: () {
                         _loadAllItems();
@@ -361,7 +376,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                 title: Text(
                                   '${item.itemCode} - ${item.itemName}',
                                 ),
-                                subtitle: Text('\$${item.itemAmount}'),
+                                subtitle: Text('₹${item.itemAmount}'),
                                 onTap: () => onSelected(item),
                               );
                             },
@@ -372,19 +387,9 @@ class _OrderMasterState extends State<OrderMaster> {
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            flex: 3,
-            child: TextFormField(
-              controller: TextEditingController(text: item.itemName),
-              decoration: const InputDecoration(
-                labelText: 'Item Name',
-                border: OutlineInputBorder(),
-              ),
-              readOnly: true,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
+          // Amount
+          SizedBox(
+            width: 150,
             child: TextFormField(
               controller: TextEditingController(
                 text: item.itemAmount.toString(),
@@ -397,7 +402,9 @@ class _OrderMasterState extends State<OrderMaster> {
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
+          // Quantity
+          SizedBox(
+            width: 100,
             child: TextFormField(
               controller: TextEditingController(text: item.quantity.toString()),
               decoration: const InputDecoration(
@@ -418,9 +425,13 @@ class _OrderMasterState extends State<OrderMaster> {
               },
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => setState(() => orderItems.removeAt(index)),
+          // Delete Button
+          SizedBox(
+            width: 80,
+            child: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => setState(() => orderItems.removeAt(index)),
+            ),
           ),
         ],
       ),
@@ -429,8 +440,9 @@ class _OrderMasterState extends State<OrderMaster> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading)
+    if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -472,90 +484,126 @@ class _OrderMasterState extends State<OrderMaster> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                GuestInfoSection(
-                  quantityController: _quantityController,
-                  maleController: _maleController,
-                  femaleController: _femaleController,
-                  kidsController: _kidsController,
-                  onDistributePressed: () {
-                    if (_quantityController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Enter member count first'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } else {
-                      _showMemberDistributionDialog();
-                    }
-                  },
-                  onTableAllocatePressed: _handleTableAllocation,
-                ),
+          child: Column(
+            children: [
+              // Guest Info Section
+              GuestInfoSection(
+                quantityController: _quantityController,
+                maleController: _maleController,
+                femaleController: _femaleController,
+                kidsController: _kidsController,
+                onDistributePressed: () {
+                  if (_quantityController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Enter member count first'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } else {
+                    _showMemberDistributionDialog();
+                  }
+                },
+                onTableAllocatePressed: _handleTableAllocation,
+              ),
 
-                if (_showTableAllocation) ...[
-                  const SizedBox(height: 16),
-                  _isLoadingTables
-                      ? const Center(child: CircularProgressIndicator())
-                      : SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.4,
-                          child: AllocateTableSection(
-                            selectedTable: _selectedTable,
-                            onTableSelected: _onTableSelected,
-                          ),
+              // Table Allocation Section
+              if (_showTableAllocation) ...[
+                const SizedBox(height: 8),
+                _isLoadingTables
+                    ? const Center(child: CircularProgressIndicator())
+                    : SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.3,
+                        child: AllocateTableSection(
+                          selectedTable: _selectedTable,
+                          onTableSelected: _onTableSelected,
                         ),
-                ],
+                      ),
+              ],
 
-                const SizedBox(height: 24),
-                Card(
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Order Items',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        for (int i = 0; i < orderItems.length; i++)
-                          _buildOrderItemRow(i, orderItems[i]),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => setState(
-                                  () => orderItems.add(OrderItem.empty()),
-                                ),
-                                icon: const Icon(Icons.add),
-                                label: const Text('Add Item'),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _submitOrder,
-                                icon: const Icon(Icons.check),
-                                label: const Text('Submit Order'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade700,
+              // Order Items Section with Horizontal Scroll
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Card(
+                        elevation: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'Order Items',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              Scrollable(
+                                axisDirection: AxisDirection.right,
+                                viewportBuilder: (context, offset) {
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: MediaQuery.of(
+                                          context,
+                                        ).size.width,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          for (
+                                            int i = 0;
+                                            i < orderItems.length;
+                                            i++
+                                          )
+                                            _buildOrderItemRow(
+                                              i,
+                                              orderItems[i],
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => setState(
+                                        () => orderItems.add(OrderItem.empty()),
+                                      ),
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Add Item'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _submitOrder,
+                                      icon: const Icon(Icons.check),
+                                      label: const Text('Submit Order'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -572,7 +620,6 @@ class _OrderMasterState extends State<OrderMaster> {
   }
 }
 
-// Add this to your OrderItem class if not already present
 extension OrderItemExtension on OrderItem {
   static OrderItem empty() => OrderItem(
     itemCode: '',
