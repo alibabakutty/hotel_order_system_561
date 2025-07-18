@@ -238,19 +238,6 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
                     ),
                   ),
                   SizedBox(
-                    width: statusWidth,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'Status',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
                     width: actionWidth,
                     child: const Padding(
                       padding: EdgeInsets.all(8.0),

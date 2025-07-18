@@ -310,7 +310,7 @@ class _OrderMasterState extends State<OrderMaster> {
   Widget _buildOrderItemRow(int index, OrderItem item) {
     final combinedController = TextEditingController(
       text: item.itemCode.isNotEmpty
-          ? '${item.itemCode} - ${item.itemName.capitalize()}'
+          ? '${item.itemCode} - ${item.itemName.capitalize()} '
           : '',
     );
     final focusNode = FocusNode();
@@ -367,6 +367,7 @@ class _OrderMasterState extends State<OrderMaster> {
                         border: OutlineInputBorder(),
                         hintText: 'Search by code or name',
                       ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                       onTap: () {
                         _loadAllItems();
                         node.requestFocus();
@@ -381,14 +382,23 @@ class _OrderMasterState extends State<OrderMaster> {
                     child: _isLoadingItems
                         ? const Center(child: CircularProgressIndicator())
                         : ListView.builder(
+                            padding: EdgeInsets.zero, // Remove default padding
                             itemCount: options.length,
                             itemBuilder: (context, index) {
                               final item = options.elementAt(index);
                               return ListTile(
+                                dense: true, // Makes the ListTile more compact
+                                visualDensity: VisualDensity
+                                    .compact, // Reduces vertical spacing
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ), // Adjust horizontal padding
                                 title: Text(
-                                  '${item.itemCode} - ${item.itemName.capitalize()}',
+                                  '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemAmount}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                  ), // Optional: reduce font size
                                 ),
-                                subtitle: Text('₹${item.itemAmount}'),
                                 onTap: () => onSelected(item),
                               );
                             },
@@ -400,17 +410,24 @@ class _OrderMasterState extends State<OrderMaster> {
           ),
           const SizedBox(width: 8),
           // Amount
+          // In the _buildOrderItemRow method, replace the amount TextFormField with this:
           SizedBox(
             width: 150,
             child: TextFormField(
               controller: TextEditingController(
-                text: item.itemAmount.toString(),
+                text: item.itemAmount > 0
+                    ? '₹${item.itemAmount.toStringAsFixed(2)}' // Add ₹ symbol
+                    : '₹0.00',
               ),
               decoration: const InputDecoration(
                 labelText: 'Amount',
                 border: OutlineInputBorder(),
               ),
               readOnly: true,
+              style: TextStyle(
+                color: Colors.grey[800],
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -423,6 +440,7 @@ class _OrderMasterState extends State<OrderMaster> {
                 labelText: 'Qty',
                 border: OutlineInputBorder(),
               ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
               keyboardType: TextInputType.number,
               onChanged: (value) {
                 setState(() {
