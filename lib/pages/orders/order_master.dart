@@ -316,13 +316,14 @@ class _OrderMasterState extends State<OrderMaster> {
     final focusNode = FocusNode();
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      width: 1000, // Reduced width since we combined two fields
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      width: 1000,
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Combined Item Code and Name
           SizedBox(
-            width: 450, // Wider to accommodate both code and name
+            width: 300,
+            height: 40,
             child: RawAutocomplete<ItemMasterData>(
               focusNode: focusNode,
               textEditingController: combinedController,
@@ -352,28 +353,28 @@ class _OrderMasterState extends State<OrderMaster> {
                       '${selection.itemCode} - ${selection.itemName.capitalize()}';
                 });
               },
-              fieldViewBuilder:
-                  (
-                    BuildContext context,
-                    TextEditingController controller,
-                    FocusNode node,
-                    VoidCallback onFieldSubmitted,
-                  ) {
-                    return TextFormField(
-                      controller: controller,
-                      focusNode: node,
-                      decoration: const InputDecoration(
-                        labelText: 'Item Code - Name',
-                        border: OutlineInputBorder(),
-                        hintText: 'Search by code or name',
-                      ),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      onTap: () {
-                        _loadAllItems();
-                        node.requestFocus();
-                      },
-                    );
+              fieldViewBuilder: (context, controller, node, onFieldSubmitted) {
+                return TextFormField(
+                  controller: controller,
+                  focusNode: node,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Search by code or name',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 12,
+                    ),
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  onTap: () {
+                    _loadAllItems();
+                    node.requestFocus();
                   },
+                );
+              },
               optionsViewBuilder: (context, onSelected, options) {
                 return Material(
                   elevation: 4.0,
@@ -382,22 +383,19 @@ class _OrderMasterState extends State<OrderMaster> {
                     child: _isLoadingItems
                         ? const Center(child: CircularProgressIndicator())
                         : ListView.builder(
-                            padding: EdgeInsets.zero, // Remove default padding
+                            padding: EdgeInsets.zero,
                             itemCount: options.length,
                             itemBuilder: (context, index) {
                               final item = options.elementAt(index);
                               return ListTile(
-                                dense: true, // Makes the ListTile more compact
-                                visualDensity: VisualDensity
-                                    .compact, // Reduces vertical spacing
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16.0,
-                                ), // Adjust horizontal padding
+                                ),
                                 title: Text(
                                   '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemAmount}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                  ), // Optional: reduce font size
+                                  style: const TextStyle(fontSize: 14),
                                 ),
                                 onTap: () => onSelected(item),
                               );
@@ -409,38 +407,44 @@ class _OrderMasterState extends State<OrderMaster> {
             ),
           ),
           const SizedBox(width: 8),
-          // Amount
-          // In the _buildOrderItemRow method, replace the amount TextFormField with this:
           SizedBox(
             width: 150,
+            height: 40,
             child: TextFormField(
               controller: TextEditingController(
                 text: item.itemAmount > 0
-                    ? '₹${item.itemAmount.toStringAsFixed(2)}' // Add ₹ symbol
+                    ? '₹${item.itemAmount.toStringAsFixed(2)}'
                     : '₹0.00',
               ),
               decoration: const InputDecoration(
-                labelText: 'Amount',
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
               ),
               readOnly: true,
               style: TextStyle(
                 color: Colors.grey[800],
                 fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
           ),
           const SizedBox(width: 8),
-          // Quantity
           SizedBox(
-            width: 100,
+            width: 50,
+            height: 40,
             child: TextFormField(
               controller: TextEditingController(text: item.quantity.toString()),
               decoration: const InputDecoration(
-                labelText: 'Qty',
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
               ),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               keyboardType: TextInputType.number,
               onChanged: (value) {
                 setState(() {
@@ -455,11 +459,11 @@ class _OrderMasterState extends State<OrderMaster> {
               },
             ),
           ),
-          // Delete Button
           SizedBox(
             width: 80,
             child: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+              padding: EdgeInsets.zero,
               onPressed: () => setState(() => orderItems.removeAt(index)),
             ),
           ),
@@ -585,6 +589,68 @@ class _OrderMasterState extends State<OrderMaster> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
+                                          // ✅ COMMON HEADING ROW
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                              horizontal: 4.0,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[200],
+                                              borderRadius:
+                                                  BorderRadius.circular(4.0),
+                                            ),
+                                            width: 1000,
+                                            child: const Row(
+                                              children: [
+                                                SizedBox(
+                                                  width: 300,
+                                                  child: Text(
+                                                    'ITEM',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                SizedBox(
+                                                  width: 150,
+                                                  child: Text(
+                                                    'AMOUNT',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                SizedBox(
+                                                  width: 100,
+                                                  child: Text(
+                                                    'QTY',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: 80,
+                                                  child: Text(''),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+
+                                          // ✅ ITEM ROWS
                                           for (
                                             int i = 0;
                                             i < orderItems.length;
@@ -600,6 +666,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                   );
                                 },
                               ),
+
                               const SizedBox(height: 16),
                               Row(
                                 children: [
