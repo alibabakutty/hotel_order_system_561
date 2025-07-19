@@ -308,12 +308,47 @@ class _OrderMasterState extends State<OrderMaster> {
       name.length <= 12 ? name : '${name.substring(0, 12)}...';
 
   Widget _buildOrderItemRow(int index, OrderItem item) {
-    final combinedController = TextEditingController(
-      text: item.itemCode.isNotEmpty
-          ? '${item.itemCode} - ${item.itemName.capitalize()} '
-          : '',
-    );
+    final itemNameController = TextEditingController(text: item.itemName);
     final focusNode = FocusNode();
+    final quantityController = TextEditingController(
+      text: item.quantity % 1 == 0
+          ? item.quantity.toInt().toString()
+          : item.quantity.toStringAsFixed(2),
+    );
+
+    void updateQuantity(double newQty) {
+      // For quantities less than 1, only allow 0.25, 0.50, 0.75
+      if (newQty < 1) {
+        newQty = (newQty * 4).round() / 4; // Snap to nearest 0.25
+        newQty = newQty.clamp(
+          0.25,
+          0.75,
+        ); // Ensure it stays between 0.25 and 0.75
+      }
+      // For quantities 1 and above, allow whole numbers only
+      else {
+        newQty = newQty.roundToDouble(); // Round to nearest whole number
+      }
+
+      // If trying to decrease below minimum, remove the item
+      if (newQty <= 0.24) {
+        setState(() => orderItems.removeAt(index));
+        return;
+      }
+
+      setState(() {
+        orderItems[index] = OrderItem(
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          itemAmount: item.itemAmount,
+          itemStatus: item.itemStatus,
+          quantity: newQty,
+        );
+        quantityController.text = newQty % 1 == 0
+            ? newQty.toInt().toString()
+            : newQty.toStringAsFixed(2);
+      });
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -321,92 +356,190 @@ class _OrderMasterState extends State<OrderMaster> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Item Name (searchable autocomplete or editable field)
           SizedBox(
             width: 300,
             height: 40,
-            child: RawAutocomplete<ItemMasterData>(
-              focusNode: focusNode,
-              textEditingController: combinedController,
-              optionsBuilder: (TextEditingValue textEditingValue) {
-                return _isLoadingItems
-                    ? const Iterable<ItemMasterData>.empty()
-                    : _allItems.where(
-                        (item) =>
-                            item.itemCode.toString().contains(
-                              textEditingValue.text,
-                            ) ||
-                            item.itemName.toLowerCase().contains(
-                              textEditingValue.text.toLowerCase(),
+            child: item.itemCode.isEmpty
+                ? RawAutocomplete<ItemMasterData>(
+                    focusNode: focusNode,
+                    textEditingController: TextEditingController(),
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      return _isLoadingItems
+                          ? const Iterable<ItemMasterData>.empty()
+                          : _allItems.where(
+                              (item) => item.itemName.toLowerCase().contains(
+                                textEditingValue.text.toLowerCase(),
+                              ),
+                            );
+                    },
+                    onSelected: (ItemMasterData selection) {
+                      setState(() {
+                        orderItems[index] = OrderItem(
+                          itemCode: selection.itemCode.toString(),
+                          itemName: selection.itemName.capitalize(),
+                          itemAmount: selection.itemAmount,
+                          itemStatus: selection.itemStatus,
+                          quantity: orderItems[index].quantity,
+                        );
+                      });
+                    },
+                    fieldViewBuilder:
+                        (context, controller, node, onFieldSubmitted) {
+                          return TextFormField(
+                            controller: controller,
+                            focusNode: node,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Search by name',
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 12,
+                              ),
                             ),
-                      );
-              },
-              onSelected: (ItemMasterData selection) {
-                setState(() {
-                  orderItems[index] = OrderItem(
-                    itemCode: selection.itemCode.toString(),
-                    itemName: selection.itemName.capitalize(),
-                    itemAmount: selection.itemAmount,
-                    itemStatus: selection.itemStatus,
-                    quantity: orderItems[index].quantity,
-                  );
-                  combinedController.text =
-                      '${selection.itemCode} - ${selection.itemName.capitalize()}';
-                });
-              },
-              fieldViewBuilder: (context, controller, node, onFieldSubmitted) {
-                return TextFormField(
-                  controller: controller,
-                  focusNode: node,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Search by code or name',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 12,
-                    ),
-                  ),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  onTap: () {
-                    _loadAllItems();
-                    node.requestFocus();
-                  },
-                );
-              },
-              optionsViewBuilder: (context, onSelected, options) {
-                return Material(
-                  elevation: 4.0,
-                  child: SizedBox(
-                    height: 200,
-                    child: _isLoadingItems
-                        ? const Center(child: CircularProgressIndicator())
-                        : ListView.builder(
-                            padding: EdgeInsets.zero,
-                            itemCount: options.length,
-                            itemBuilder: (context, index) {
-                              final item = options.elementAt(index);
-                              return ListTile(
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                ),
-                                title: Text(
-                                  '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemAmount}',
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                onTap: () => onSelected(item),
-                              );
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            onTap: () {
+                              _loadAllItems();
+                              node.requestFocus();
                             },
-                          ),
+                          );
+                        },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Material(
+                        elevation: 4.0,
+                        child: SizedBox(
+                          height: 200,
+                          child: _isLoadingItems
+                              ? const Center(child: CircularProgressIndicator())
+                              : ListView.builder(
+                                  padding: EdgeInsets.zero,
+                                  itemCount: options.length,
+                                  itemBuilder: (context, index) {
+                                    final item = options.elementAt(index);
+                                    return ListTile(
+                                      dense: true,
+                                      visualDensity: VisualDensity.compact,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                          ),
+                                      title: Text(
+                                        '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemAmount}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      onTap: () => onSelected(item),
+                                    );
+                                  },
+                                ),
+                        ),
+                      );
+                    },
+                  )
+                : TextFormField(
+                    controller: itemNameController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 12,
+                      ),
+                    ),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        orderItems[index] = OrderItem(
+                          itemCode: item.itemCode,
+                          itemName: value,
+                          itemAmount: item.itemAmount,
+                          itemStatus: item.itemStatus,
+                          quantity: item.quantity,
+                        );
+                      });
+                    },
                   ),
-                );
-              },
+          ),
+          const SizedBox(width: 8),
+
+          // Quantity with -/+ buttons
+          SizedBox(
+            width: 150, // Increased width to accommodate buttons
+            child: Row(
+              children: [
+                // Decrease button
+                IconButton(
+                  icon: const Icon(Icons.remove, size: 18),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    if (item.quantity == 1) {
+                      // Special case: 1 → 0.5
+                      updateQuantity(0.5);
+                    } else if (item.quantity > 1) {
+                      // For quantities > 1, decrease by 1
+                      updateQuantity(item.quantity - 1);
+                    } else {
+                      // For quantities < 1, decrease by 0.25
+                      updateQuantity(item.quantity - 0.25);
+                    }
+                  },
+                ),
+
+                // Quantity input field
+                SizedBox(
+                  width: 50,
+                  child: TextFormField(
+                    controller: quantityController,
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    onChanged: (value) {
+                      final newQty = double.tryParse(value) ?? 1.0;
+                      if (newQty <= 0) {
+                        setState(() => orderItems.removeAt(index));
+                      } else {
+                        updateQuantity(newQty);
+                      }
+                    },
+                  ),
+                ),
+
+                // Increase button
+                IconButton(
+                  icon: const Icon(Icons.add, size: 18),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    // For quantities < 1, increase by 0.25
+                    if (item.quantity < 1) {
+                      updateQuantity(item.quantity + 0.25);
+                    }
+                    // For quantities >= 1, increase by 1
+                    else {
+                      updateQuantity(item.quantity + 1);
+                    }
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
+
+          // Item Amount (read-only)
           SizedBox(
             width: 150,
             height: 40,
@@ -431,34 +564,9 @@ class _OrderMasterState extends State<OrderMaster> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 50,
-            height: 40,
-            child: TextFormField(
-              controller: TextEditingController(text: item.quantity.toString()),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 12,
-                ),
-              ),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                setState(() {
-                  orderItems[index] = OrderItem(
-                    itemCode: item.itemCode,
-                    itemName: item.itemName,
-                    itemAmount: item.itemAmount,
-                    itemStatus: item.itemStatus,
-                    quantity: int.tryParse(value) ?? 1,
-                  );
-                });
-              },
-            ),
-          ),
+
+          const SizedBox(height: 8),
+
           SizedBox(
             width: 80,
             child: IconButton(
@@ -590,6 +698,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           // ✅ COMMON HEADING ROW
+                                          // In your build method, replace the header row with this:
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               vertical: 8.0,
@@ -601,11 +710,11 @@ class _OrderMasterState extends State<OrderMaster> {
                                                   BorderRadius.circular(4.0),
                                             ),
                                             width: 1000,
-                                            child: const Row(
+                                            child: Row(
                                               children: [
                                                 SizedBox(
-                                                  width: 300,
-                                                  child: Text(
+                                                  width: 360,
+                                                  child: const Text(
                                                     'ITEM',
                                                     style: TextStyle(
                                                       fontWeight:
@@ -617,8 +726,21 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 SizedBox(
+                                                  width: 100,
+                                                  child: const Text(
+                                                    'QTY',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                SizedBox(
                                                   width: 150,
-                                                  child: Text(
+                                                  child: const Text(
                                                     'AMOUNT',
                                                     style: TextStyle(
                                                       fontWeight:
@@ -630,20 +752,32 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 SizedBox(
-                                                  width: 100,
-                                                  child: Text(
-                                                    'QTY',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(
                                                   width: 80,
-                                                  child: Text(''),
+                                                  child: ElevatedButton.icon(
+                                                    onPressed: () => setState(
+                                                      () => orderItems.insert(
+                                                        0,
+                                                        OrderItem.empty(),
+                                                      ),
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.add,
+                                                      size: 16,
+                                                    ),
+                                                    label: const Text(
+                                                      'Add',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          padding:
+                                                              EdgeInsets.zero,
+                                                          minimumSize:
+                                                              Size.zero,
+                                                        ),
+                                                  ),
                                                 ),
                                               ],
                                             ),
@@ -668,32 +802,20 @@ class _OrderMasterState extends State<OrderMaster> {
                               ),
 
                               const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () => setState(
-                                        () => orderItems.insert(
-                                          0,
-                                          OrderItem.empty(),
-                                        ),
-                                      ),
-                                      icon: const Icon(Icons.add),
-                                      label: const Text('Add Item'),
+                              // Replace the bottom buttons row with just the Submit Order button:
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _submitOrder,
+                                  icon: const Icon(Icons.check),
+                                  label: const Text('Submit Order'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green.shade700,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: _submitOrder,
-                                      icon: const Icon(Icons.check),
-                                      label: const Text('Submit Order'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green.shade700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),

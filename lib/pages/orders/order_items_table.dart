@@ -328,7 +328,7 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
                                       itemName: item.itemName,
                                       itemAmount: item.itemAmount,
                                       itemStatus: item.itemStatus,
-                                      quantity: int.tryParse(value) ?? 1,
+                                      quantity: item.quantity,
                                     );
                                   },
                                 ),

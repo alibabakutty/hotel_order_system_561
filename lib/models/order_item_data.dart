@@ -1,9 +1,9 @@
 class OrderItem {
-  String itemCode;
-  String itemName;
-  double itemAmount;
-  bool itemStatus;
-  int quantity;
+  final String itemCode;
+  final String itemName;
+  final double itemAmount;
+  final bool itemStatus;
+  final double quantity;
 
   OrderItem({
     required this.itemCode,
@@ -19,7 +19,7 @@ class OrderItem {
     itemName: '',
     itemAmount: 0.0,
     itemStatus: true,
-    quantity: 1,
+    quantity: 1.0,
   );
 
   Map<String, dynamic> toMap() {
@@ -38,7 +38,7 @@ class OrderItem {
       itemName: map['itemName'] ?? '',
       itemAmount: map['itemAmount']?.toDouble() ?? 0.0,
       itemStatus: map['itemStatus'] ?? true,
-      quantity: map['quantity'] ?? 1,
+      quantity: map['quantity']?.toDouble() ?? 0.0,
     );
   }
 }
