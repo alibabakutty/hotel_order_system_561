@@ -155,12 +155,12 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
 
   @override
   Widget build(BuildContext context) {
-    const double codeWidth = 200;
-    const double nameWidth = 200;
-    const double qtyWidth = 100;
-    const double amountWidth = 100;
-    const double statusWidth = 100;
-    const double actionWidth = 80;
+    const double codeWidth = 180;
+    const double nameWidth = 180;
+    const double qtyWidth = 80;
+    const double amountWidth = 80;
+    const double statusWidth = 80;
+    const double actionWidth = 60;
 
     final totalWidth =
         codeWidth +
@@ -185,19 +185,6 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
               width: totalWidth,
               child: Row(
                 children: [
-                  SizedBox(
-                    width: codeWidth,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'Item code/name',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
                   SizedBox(
                     width: nameWidth,
                     child: const Padding(

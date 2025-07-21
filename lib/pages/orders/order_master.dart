@@ -358,7 +358,7 @@ class _OrderMasterState extends State<OrderMaster> {
         children: [
           // Item Name (searchable autocomplete or editable field)
           SizedBox(
-            width: 300,
+            width: 200,
             height: 40,
             child: item.itemCode.isEmpty
                 ? RawAutocomplete<ItemMasterData>(
@@ -655,7 +655,7 @@ class _OrderMasterState extends State<OrderMaster> {
                 _isLoadingTables
                     ? const Center(child: CircularProgressIndicator())
                     : SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.3,
+                        height: MediaQuery.of(context).size.height * 0.1,
                         child: AllocateTableSection(
                           selectedTable: _selectedTable,
                           onTableSelected: _onTableSelected,
@@ -701,8 +701,8 @@ class _OrderMasterState extends State<OrderMaster> {
                                           // In your build method, replace the header row with this:
                                           Container(
                                             padding: const EdgeInsets.symmetric(
-                                              vertical: 8.0,
-                                              horizontal: 4.0,
+                                              vertical: 4.0,
+                                              horizontal: 2.0,
                                             ),
                                             decoration: BoxDecoration(
                                               color: Colors.grey[200],
@@ -710,10 +710,11 @@ class _OrderMasterState extends State<OrderMaster> {
                                                   BorderRadius.circular(4.0),
                                             ),
                                             width: 1000,
+                                            height: 30,
                                             child: Row(
                                               children: [
                                                 SizedBox(
-                                                  width: 360,
+                                                  width: 250,
                                                   child: const Text(
                                                     'ITEM',
                                                     style: TextStyle(

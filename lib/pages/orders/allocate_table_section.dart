@@ -5,11 +5,15 @@ import 'package:food_order_system/service/firebase_service.dart';
 class AllocateTableSection extends StatefulWidget {
   final TableMasterData? selectedTable;
   final Function(TableMasterData?) onTableSelected;
+  final double? width;
+  final double? height;
 
   const AllocateTableSection({
     super.key,
     required this.selectedTable,
     required this.onTableSelected,
+    this.width,
+    this.height,
   });
 
   @override
@@ -50,117 +54,96 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              insetPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 24,
-              ),
+              insetPadding: const EdgeInsets.all(8),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
+                constraints: BoxConstraints(
+                  maxWidth: widget.width ?? 280,
+                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Header
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
                       child: Row(
                         children: [
-                          const Text(
-                            'Select Table',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Text(
+                            'SELECT TABLE',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.close, size: 18),
                             onPressed: () => Navigator.pop(context),
+                            padding: EdgeInsets.zero,
                           ),
                         ],
                       ),
                     ),
                     const Divider(height: 1),
-                    if (_isLoadingTables)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: CircularProgressIndicator(),
-                      )
-                    else if (_availableTables.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Text('No available tables'),
-                      )
-                    else
-                      Flexible(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: _availableTables.map((table) {
-                              final isSelected =
-                                  widget.selectedTable?.tableNumber ==
-                                  table.tableNumber;
 
-                              return RadioListTile<TableMasterData>(
-                                value: table,
-                                groupValue: isSelected
-                                    ? widget.selectedTable
-                                    : null,
-                                onChanged: (selectedTable) {
-                                  setState(() {
-                                    widget.onTableSelected(selectedTable);
-                                  });
-                                },
-                                title: Text(
-                                  'Table ${table.tableNumber}',
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                subtitle: Text(
-                                  'Capacity: ${table.tableCapacity}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                secondary: Icon(
-                                  table.tableAvailability
-                                      ? Icons.check
-                                      : Icons.close,
-                                  size: 20,
-                                  color: table.tableAvailability
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                                dense: true,
-                                contentPadding: EdgeInsets.zero,
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
+                    // Content
+                    Expanded(
+                      child: _isLoadingTables
+                          ? const Center(child: CircularProgressIndicator())
+                          : _availableTables.isEmpty
+                          ? const Center(child: Text('No tables available'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              itemCount: _availableTables.length,
+                              itemBuilder: (context, index) {
+                                final table = _availableTables[index];
+                                final isSelected =
+                                    widget.selectedTable?.tableNumber ==
+                                    table.tableNumber;
+
+                                return ListTile(
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  leading: Radio<TableMasterData>(
+                                    value: table,
+                                    groupValue: isSelected
+                                        ? widget.selectedTable
+                                        : null,
+                                    onChanged: (t) {
+                                      widget.onTableSelected(t);
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                  title: Text(
+                                    'Table ${table.tableNumber}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  trailing: Text(
+                                    '${table.tableCapacity}p',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    widget.onTableSelected(table);
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+
+                    // Footer
                     const Divider(height: 1),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
+                      padding: const EdgeInsets.all(8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('CANCEL'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: widget.selectedTable != null
-                                ? () => Navigator.pop(context)
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                            ),
-                            child: const Text('CONFIRM'),
+                            child: const Text('CLOSE'),
                           ),
                         ],
                       ),
@@ -177,72 +160,69 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0), // Reduced padding
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // Important for reducing height
-          children: [
-            const Text(
-              'Table Allocation',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8), // Reduced spacing
-            if (widget.selectedTable != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
+    return SizedBox(
+      width: 370,
+      height: widget.height ?? 80, // Default height if not specified
+      child: Card(
+        elevation: 2,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.selectedTable == null)
+                ElevatedButton.icon(
+                  onPressed: () => _showTableSelectionDialog(context),
+                  icon: const Icon(Icons.table_restaurant, size: 16),
+                  label: const Text('SELECT TABLE'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(36),
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+
+              if (widget.selectedTable != null)
+                Row(
                   children: [
                     const Icon(
                       Icons.table_restaurant,
+                      size: 20,
                       color: Colors.green,
-                      size: 24, // Slightly smaller icon
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Table ${widget.selectedTable!.tableNumber}'),
-                          Text(
-                            'Capacity: ${widget.selectedTable!.tableCapacity}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Table ${widget.selectedTable!.tableNumber}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Text(
+                          '${widget.selectedTable!.tableCapacity} persons',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18),
+                      onPressed: () => _showTableSelectionDialog(context),
+                      tooltip: 'Change table',
                     ),
                     IconButton(
-                      icon: const Icon(Icons.clear, size: 20),
+                      icon: const Icon(Icons.clear, size: 18),
                       onPressed: () => widget.onTableSelected(null),
-                      padding: EdgeInsets.zero, // Remove extra padding
-                      constraints: const BoxConstraints(), // Remove constraints
+                      tooltip: 'Clear selection',
                     ),
                   ],
                 ),
-              ),
             ],
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _showTableSelectionDialog(context),
-                icon: const Icon(Icons.table_restaurant, size: 18),
-                label: Text(
-                  widget.selectedTable == null
-                      ? 'Select Table'
-                      : 'Change Table',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12, // Reduced padding
-                    horizontal: 16,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
