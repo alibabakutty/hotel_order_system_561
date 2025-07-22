@@ -358,7 +358,7 @@ class _OrderMasterState extends State<OrderMaster> {
         children: [
           // Item Name (searchable autocomplete or editable field)
           SizedBox(
-            width: 200,
+            width: 120,
             height: 40,
             child: item.itemCode.isEmpty
                 ? RawAutocomplete<ItemMasterData>(
@@ -464,27 +464,25 @@ class _OrderMasterState extends State<OrderMaster> {
                     },
                   ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 2),
 
-          // Quantity with -/+ buttons
+          // Compact Quantity Control
           SizedBox(
-            width: 150, // Increased width to accommodate buttons
+            width: 120, // Reduced from 140
             child: Row(
               children: [
                 // Decrease button
                 IconButton(
-                  icon: const Icon(Icons.remove, size: 18),
+                  icon: const Icon(Icons.remove, size: 16), // Smaller icon
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
+                  visualDensity: VisualDensity.compact,
                   onPressed: () {
                     if (item.quantity == 1) {
-                      // Special case: 1 → 0.5
                       updateQuantity(0.5);
                     } else if (item.quantity > 1) {
-                      // For quantities > 1, decrease by 1
                       updateQuantity(item.quantity - 1);
                     } else {
-                      // For quantities < 1, decrease by 0.25
                       updateQuantity(item.quantity - 0.25);
                     }
                   },
@@ -492,17 +490,18 @@ class _OrderMasterState extends State<OrderMaster> {
 
                 // Quantity input field
                 SizedBox(
-                  width: 50,
+                  width: 35, // Reduced from 25
+                  height: 35,
                   child: TextFormField(
                     controller: quantityController,
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
-                    ),
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    ), // Less padding
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 12, // Smaller font
                     ),
                     keyboardType: TextInputType.numberWithOptions(
                       decimal: true,
@@ -520,16 +519,14 @@ class _OrderMasterState extends State<OrderMaster> {
 
                 // Increase button
                 IconButton(
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(Icons.add, size: 16), // Smaller icon
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
+                  visualDensity: VisualDensity.compact,
                   onPressed: () {
-                    // For quantities < 1, increase by 0.25
                     if (item.quantity < 1) {
                       updateQuantity(item.quantity + 0.25);
-                    }
-                    // For quantities >= 1, increase by 1
-                    else {
+                    } else {
                       updateQuantity(item.quantity + 1);
                     }
                   },
@@ -537,11 +534,11 @@ class _OrderMasterState extends State<OrderMaster> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 2),
 
           // Item Amount (read-only)
           SizedBox(
-            width: 150,
+            width: 80,
             height: 40,
             child: TextFormField(
               controller: TextEditingController(
@@ -565,10 +562,10 @@ class _OrderMasterState extends State<OrderMaster> {
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
 
           SizedBox(
-            width: 80,
+            width: 45,
             child: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red, size: 20),
               padding: EdgeInsets.zero,
@@ -714,7 +711,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                             child: Row(
                                               children: [
                                                 SizedBox(
-                                                  width: 250,
+                                                  width: 150,
                                                   child: const Text(
                                                     'ITEM',
                                                     style: TextStyle(
@@ -727,7 +724,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 SizedBox(
-                                                  width: 100,
+                                                  width: 80,
                                                   child: const Text(
                                                     'QTY',
                                                     style: TextStyle(
@@ -740,7 +737,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 SizedBox(
-                                                  width: 150,
+                                                  width: 80,
                                                   child: const Text(
                                                     'AMOUNT',
                                                     style: TextStyle(
@@ -753,7 +750,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 SizedBox(
-                                                  width: 80,
+                                                  width: 25,
                                                   child: ElevatedButton.icon(
                                                     onPressed: () => setState(
                                                       () => orderItems.insert(
@@ -766,7 +763,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                       size: 16,
                                                     ),
                                                     label: const Text(
-                                                      'Add',
+                                                      '',
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                       ),
