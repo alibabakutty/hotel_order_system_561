@@ -449,7 +449,7 @@ class _OrderMasterState extends State<OrderMaster> {
                     ),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 11,
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -506,7 +506,7 @@ class _OrderMasterState extends State<OrderMaster> {
                     ),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                     keyboardType: TextInputType.numberWithOptions(
                       decimal: true,
@@ -545,7 +545,7 @@ class _OrderMasterState extends State<OrderMaster> {
 
           // Item Amount (read-only)
           SizedBox(
-            width: 75,
+            width: 70,
             height: 40,
             child: TextFormField(
               controller: TextEditingController(
@@ -564,7 +564,7 @@ class _OrderMasterState extends State<OrderMaster> {
               style: TextStyle(
                 color: Colors.grey[800],
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 11,
               ),
             ),
           ),
@@ -742,7 +742,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 6),
                                                 SizedBox(
-                                                  width: 80,
+                                                  width: 70,
                                                   child: const Text(
                                                     'AMOUNT',
                                                     style: TextStyle(
