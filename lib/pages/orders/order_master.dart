@@ -54,6 +54,7 @@ class _OrderMasterState extends State<OrderMaster> {
   final FirebaseService _firebaseService = FirebaseService();
   List<ItemMasterData> _allItems = [];
   bool _isLoadingItems = false;
+  bool _isGuestInfoExpanded = true;
 
   @override
   void initState() {
@@ -267,31 +268,15 @@ class _OrderMasterState extends State<OrderMaster> {
     }
   }
 
-  Future<void> _handleTableAllocation() async {
-    if (_showTableAllocation) {
-      setState(() => _showTableAllocation = false);
-      return;
-    }
-
-    setState(() => _isLoadingTables = true);
-
-    try {
-      await _firebaseService.getAllTables();
-      setState(() => _showTableAllocation = true);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading tables: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _isLoadingTables = false);
-    }
-  }
-
   void _onTableSelected(TableMasterData? table) {
-    setState(() => _selectedTable = table);
+    setState(() {
+      _selectedTable = table;
+      if (table == null) {
+        _showTableAllocation =
+            false; // Hide table section when table is cleared
+      }
+    });
+
     if (table != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -636,23 +621,27 @@ class _OrderMasterState extends State<OrderMaster> {
                 maleController: _maleController,
                 femaleController: _femaleController,
                 kidsController: _kidsController,
-                onDistributePressed: () {
-                  if (_quantityController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Enter member count first'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  } else {
-                    _showMemberDistributionDialog();
-                  }
+                onDistributePressed: _showMemberDistributionDialog,
+                onTableAllocatePressed: () {
+                  setState(() {
+                    _showTableAllocation = true;
+                    _isGuestInfoExpanded = true;
+                  });
                 },
-                onTableAllocatePressed: _handleTableAllocation,
+                onExpansionChanged: (isExpanded) {
+                  setState(() {
+                    _isGuestInfoExpanded = isExpanded;
+                    if (!isExpanded) {
+                      _showTableAllocation = false;
+                    }
+                  });
+                },
+                selectedTable: _selectedTable?.tableNumber.toString(),
+                totalMembers: int.tryParse(_quantityController.text),
               ),
 
               // Table Allocation Section
-              if (_showTableAllocation) ...[
+              if (_isGuestInfoExpanded && _showTableAllocation) ...[
                 const SizedBox(height: 8),
                 _isLoadingTables
                     ? const Center(child: CircularProgressIndicator())

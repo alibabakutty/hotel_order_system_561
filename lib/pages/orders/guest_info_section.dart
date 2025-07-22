@@ -7,8 +7,9 @@ class GuestInfoSection extends StatefulWidget {
   final TextEditingController kidsController;
   final Function() onDistributePressed;
   final Function() onTableAllocatePressed;
-  final String? selectedTable; // Add selected table parameter
-  final int? totalMembers; // Add total members parameter
+  final String? selectedTable;
+  final int? totalMembers;
+  final Function(bool)? onExpansionChanged;
 
   const GuestInfoSection({
     super.key,
@@ -20,6 +21,7 @@ class GuestInfoSection extends StatefulWidget {
     required this.onTableAllocatePressed,
     this.selectedTable,
     this.totalMembers,
+    this.onExpansionChanged,
   });
 
   @override
@@ -40,12 +42,14 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            onTap: () {
+              setState(() => _isExpanded = !_isExpanded);
+              widget.onExpansionChanged?.call(_isExpanded);
+            },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(
                 children: [
-                  // Table info badge if table is selected
                   if (widget.selectedTable != null)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -64,10 +68,7 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
                         ),
                       ),
                     ),
-
                   if (widget.selectedTable != null) const SizedBox(width: 8),
-
-                  // Members count badge if members count exists
                   if (widget.totalMembers != null)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -86,9 +87,7 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
                         ),
                       ),
                     ),
-
                   const Spacer(),
-
                   Text(
                     'GUEST INFO',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -96,9 +95,7 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
                       letterSpacing: 0.5,
                     ),
                   ),
-
                   const Spacer(),
-
                   Icon(
                     _isExpanded ? Icons.expand_less : Icons.expand_more,
                     size: 20,
@@ -107,7 +104,6 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
               ),
             ),
           ),
-
           if (_isExpanded) ...[
             const Divider(height: 1, thickness: 1),
             Padding(
@@ -165,12 +161,7 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
         controller: widget.quantityController,
         textAlign: TextAlign.center,
         decoration: InputDecoration(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(4),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           isDense: true,
         ),

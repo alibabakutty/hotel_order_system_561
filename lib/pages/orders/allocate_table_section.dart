@@ -7,6 +7,7 @@ class AllocateTableSection extends StatefulWidget {
   final Function(TableMasterData?) onTableSelected;
   final double? width;
   final double? height;
+  final bool showSelectionButton;
 
   const AllocateTableSection({
     super.key,
@@ -14,6 +15,7 @@ class AllocateTableSection extends StatefulWidget {
     required this.onTableSelected,
     this.width,
     this.height,
+    this.showSelectionButton = true,
   });
 
   @override
@@ -63,7 +65,6 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 8, 4),
                       child: Row(
@@ -83,8 +84,6 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
                       ),
                     ),
                     const Divider(height: 1),
-
-                    // Content
                     Expanded(
                       child: _isLoadingTables
                           ? const Center(child: CircularProgressIndicator())
@@ -98,7 +97,6 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
                                 final isSelected =
                                     widget.selectedTable?.tableNumber ==
                                     table.tableNumber;
-
                                 return ListTile(
                                   dense: true,
                                   contentPadding: const EdgeInsets.symmetric(
@@ -133,8 +131,6 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
                               },
                             ),
                     ),
-
-                    // Footer
                     const Divider(height: 1),
                     Padding(
                       padding: const EdgeInsets.all(8),
@@ -162,7 +158,7 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 370,
-      height: widget.height ?? 80, // Default height if not specified
+      height: widget.height ?? 80,
       child: Card(
         elevation: 2,
         margin: EdgeInsets.zero,
@@ -173,7 +169,7 @@ class _AllocateTableSectionState extends State<AllocateTableSection> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (widget.selectedTable == null)
+              if (widget.selectedTable == null && widget.showSelectionButton)
                 ElevatedButton.icon(
                   onPressed: () => _showTableSelectionDialog(context),
                   icon: const Icon(Icons.table_restaurant, size: 16),
