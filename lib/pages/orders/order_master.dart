@@ -358,7 +358,7 @@ class _OrderMasterState extends State<OrderMaster> {
         children: [
           // Item Name (searchable autocomplete or editable field)
           SizedBox(
-            width: 120,
+            width: 105,
             height: 40,
             child: item.itemCode.isEmpty
                 ? RawAutocomplete<ItemMasterData>(
@@ -464,44 +464,49 @@ class _OrderMasterState extends State<OrderMaster> {
                     },
                   ),
           ),
-          const SizedBox(width: 2),
 
           // Compact Quantity Control
+          // Compact Quantity Control
           SizedBox(
-            width: 120, // Reduced from 140
+            width: 120, // Reduced width since we're removing spacing
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Decrease button
-                IconButton(
-                  icon: const Icon(Icons.remove, size: 16), // Smaller icon
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    if (item.quantity == 1) {
-                      updateQuantity(0.5);
-                    } else if (item.quantity > 1) {
-                      updateQuantity(item.quantity - 1);
-                    } else {
-                      updateQuantity(item.quantity - 0.25);
-                    }
-                  },
+                // Decrease button - with negative margin to pull it closer
+                Transform.translate(
+                  offset: const Offset(4, 0), // Pulls button 4px to the left
+                  child: IconButton(
+                    icon: const Icon(Icons.remove, size: 16),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      if (item.quantity == 1) {
+                        updateQuantity(0.5);
+                      } else if (item.quantity > 1) {
+                        updateQuantity(item.quantity - 1);
+                      } else {
+                        updateQuantity(item.quantity - 0.25);
+                      }
+                    },
+                  ),
                 ),
 
-                // Quantity input field
+                // Quantity input field with reduced padding
                 SizedBox(
-                  width: 35, // Reduced from 25
+                  width: 40, // Slightly wider than content
                   height: 35,
                   child: TextFormField(
                     controller: quantityController,
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ), // Less padding
+                      contentPadding: EdgeInsets.zero, // Remove all padding
+                      isDense: true, // Makes the field more compact
+                    ),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 12, // Smaller font
+                      fontSize: 12,
                     ),
                     keyboardType: TextInputType.numberWithOptions(
                       decimal: true,
@@ -517,28 +522,30 @@ class _OrderMasterState extends State<OrderMaster> {
                   ),
                 ),
 
-                // Increase button
-                IconButton(
-                  icon: const Icon(Icons.add, size: 16), // Smaller icon
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    if (item.quantity < 1) {
-                      updateQuantity(item.quantity + 0.25);
-                    } else {
-                      updateQuantity(item.quantity + 1);
-                    }
-                  },
+                // Increase button - with negative margin to pull it closer
+                Transform.translate(
+                  offset: const Offset(-4, 0), // Pulls button 4px to the right
+                  child: IconButton(
+                    icon: const Icon(Icons.add, size: 16),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      if (item.quantity < 1) {
+                        updateQuantity(item.quantity + 0.25);
+                      } else {
+                        updateQuantity(item.quantity + 1);
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 2),
 
           // Item Amount (read-only)
           SizedBox(
-            width: 80,
+            width: 75,
             height: 40,
             child: TextFormField(
               controller: TextEditingController(
@@ -562,12 +569,10 @@ class _OrderMasterState extends State<OrderMaster> {
             ),
           ),
 
-          const SizedBox(height: 2),
-
           SizedBox(
-            width: 45,
+            width: 40,
             child: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+              icon: const Icon(Icons.delete, color: Colors.red, size: 16),
               padding: EdgeInsets.zero,
               onPressed: () => setState(() => orderItems.removeAt(index)),
             ),
@@ -711,7 +716,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                             child: Row(
                                               children: [
                                                 SizedBox(
-                                                  width: 150,
+                                                  width: 140,
                                                   child: const Text(
                                                     'ITEM',
                                                     style: TextStyle(
@@ -724,7 +729,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 SizedBox(
-                                                  width: 80,
+                                                  width: 65,
                                                   child: const Text(
                                                     'QTY',
                                                     style: TextStyle(
@@ -735,7 +740,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 8),
+                                                SizedBox(width: 6),
                                                 SizedBox(
                                                   width: 80,
                                                   child: const Text(
@@ -748,7 +753,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 8),
+                                                SizedBox(width: 4),
                                                 SizedBox(
                                                   width: 25,
                                                   child: ElevatedButton.icon(
@@ -760,14 +765,9 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     ),
                                                     icon: const Icon(
                                                       Icons.add,
-                                                      size: 16,
+                                                      size: 15,
                                                     ),
-                                                    label: const Text(
-                                                      '',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
+                                                    label: const Text(''),
                                                     style:
                                                         ElevatedButton.styleFrom(
                                                           padding:
