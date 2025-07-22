@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_order_system/models/item_master_data.dart';
 import 'package:food_order_system/models/order_item_data.dart';
-import 'package:food_order_system/pages/cda_page.dart';
 
 class OrderItemRow extends StatelessWidget {
   final int index;
@@ -55,7 +54,6 @@ class OrderItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final itemNameController = TextEditingController(text: item.itemName);
     final focusNode = FocusNode();
     final quantityController = TextEditingController(
       text: item.quantity % 1 == 0
@@ -74,83 +72,9 @@ class OrderItemRow extends StatelessWidget {
             width: 105,
             height: 40,
             child: item.itemCode.isEmpty
-                ? RawAutocomplete<ItemMasterData>(
-                    focusNode: focusNode,
-                    textEditingController: TextEditingController(),
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      return isLoadingItems
-                          ? const Iterable<ItemMasterData>.empty()
-                          : allItems.where(
-                              (item) => item.itemName.toLowerCase().contains(
-                                textEditingValue.text.toLowerCase(),
-                              ),
-                            );
-                    },
-                    onSelected: (ItemMasterData selection) {
-                      onUpdate(
-                        index,
-                        OrderItem(
-                          itemCode: selection.itemCode.toString(),
-                          itemName: selection.itemName.capitalize(),
-                          itemAmount: selection.itemAmount,
-                          itemStatus: selection.itemStatus,
-                          quantity: item.quantity,
-                        ),
-                      );
-                    },
-                    fieldViewBuilder:
-                        (context, controller, node, onFieldSubmitted) {
-                          return TextFormField(
-                            controller: controller,
-                            focusNode: node,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: 'Search by name',
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 12,
-                              ),
-                            ),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            onTap: () => node.requestFocus(),
-                          );
-                        },
-                    optionsViewBuilder: (context, onSelected, options) {
-                      return Material(
-                        elevation: 4.0,
-                        child: SizedBox(
-                          height: 200,
-                          child: isLoadingItems
-                              ? const Center(child: CircularProgressIndicator())
-                              : ListView.builder(
-                                  padding: EdgeInsets.zero,
-                                  itemCount: options.length,
-                                  itemBuilder: (context, index) {
-                                    final item = options.elementAt(index);
-                                    return ListTile(
-                                      dense: true,
-                                      visualDensity: VisualDensity.compact,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                          ),
-                                      title: Text(
-                                        '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemAmount}',
-                                        style: const TextStyle(fontSize: 14),
-                                      ),
-                                      onTap: () => onSelected(item),
-                                    );
-                                  },
-                                ),
-                        ),
-                      );
-                    },
-                  )
+                ? _buildItemSearchField(focusNode)
                 : TextFormField(
-                    controller: itemNameController,
+                    controller: TextEditingController(text: item.itemName),
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
@@ -288,5 +212,93 @@ class OrderItemRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildItemSearchField(FocusNode focusNode) {
+    return RawAutocomplete<ItemMasterData>(
+      focusNode: focusNode,
+      textEditingController: TextEditingController(),
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (isLoadingItems) {
+          return const Iterable<ItemMasterData>.empty();
+        }
+
+        // If search field is empty, return all items
+        if (textEditingValue.text.isEmpty) {
+          return allItems;
+        }
+
+        // Otherwise filter by code or name
+        return allItems.where((item) {
+          final searchTerm = textEditingValue.text.toLowerCase();
+          final matchesCode = item.itemCode.toString().toLowerCase().contains(
+            searchTerm,
+          );
+          final matchesName = item.itemName.toLowerCase().contains(searchTerm);
+          return matchesCode || matchesName;
+        });
+      },
+      onSelected: (ItemMasterData selection) {
+        onUpdate(
+          index,
+          OrderItem(
+            itemCode: selection.itemCode.toString(),
+            itemName: selection.itemName.capitalize(),
+            itemAmount: selection.itemAmount,
+            itemStatus: selection.itemStatus,
+            quantity: item.quantity,
+          ),
+        );
+      },
+      fieldViewBuilder: (context, controller, node, onFieldSubmitted) {
+        return TextFormField(
+          controller: controller,
+          focusNode: node,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'Search by code/name',
+            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          onTap: () => node.requestFocus(),
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Material(
+          elevation: 4.0,
+          child: SizedBox(
+            height: 200,
+            child: isLoadingItems
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final item = options.elementAt(index);
+                      return ListTile(
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                        ),
+                        title: Text(
+                          '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemAmount}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        onTap: () => onSelected(item),
+                      );
+                    },
+                  ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

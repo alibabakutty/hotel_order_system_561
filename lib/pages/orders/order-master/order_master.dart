@@ -31,7 +31,7 @@ class _OrderMasterState extends State<OrderMaster> {
   final _kidsController = TextEditingController();
 
   bool _showTableAllocation = false;
-  bool _isLoadingTables = false;
+  final _isLoadingTables = false;
   TableMasterData? _selectedTable;
   final FirebaseService _firebaseService = FirebaseService();
   List<ItemMasterData> _allItems = [];
