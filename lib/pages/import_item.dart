@@ -20,22 +20,25 @@ class _ImportItemState extends State<ImportItem> {
   bool _hasError = false;
   int _successCount = 0;
   int _errorCount = 0;
-  final _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? _fileName;
 
   Future<void> _importData() async {
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Selecting Excel file.....';
+      _statusMessage = 'Selecting Excel file...';
       _hasError = false;
       _successCount = 0;
       _errorCount = 0;
+      _fileName = null;
     });
 
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['xlsx'],
+        allowedExtensions: ['xlsx', 'xls'],
         allowMultiple: false,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -46,29 +49,41 @@ class _ImportItemState extends State<ImportItem> {
         return;
       }
 
-      Uint8List bytes;
       final file = result.files.single;
+      setState(() => _fileName = file.name);
 
-      if (file.bytes != null) {
-        bytes = file.bytes!;
-      } else if (file.path != null) {
-        bytes = await File(file.path!).readAsBytes();
-      } else {
+      if (file.bytes == null || file.bytes!.isEmpty) {
         setState(() {
           _isLoading = false;
-          _statusMessage = 'Failed to read file content';
+          _statusMessage = 'File is empty or cannot be read';
           _hasError = true;
         });
         return;
       }
 
-      final decoder = SpreadsheetDecoder.decodeBytes(bytes, update: false);
+      await _processExcelFile(file.bytes!);
+    } catch (e) {
+      debugPrint('Import error: $e');
+      setState(() {
+        _isLoading = false;
+        _statusMessage = 'Import failed: ${e.toString()}';
+        _hasError = true;
+      });
+    }
+  }
+
+  Future<void> _processExcelFile(Uint8List bytes) async {
+    setState(() => _statusMessage = 'Processing Excel file...');
+
+    try {
+      final decoder = SpreadsheetDecoder.decodeBytes(bytes, update: true);
       final table = decoder.tables.values.first;
 
-      if (table.rows.isEmpty) {
+      if (table.rows.length <= 1) {
+        // 1 because header row is included
         setState(() {
           _isLoading = false;
-          _statusMessage = 'No data found in Excel sheet';
+          _statusMessage = 'No data found in Excel sheet (only header row)';
           _hasError = true;
         });
         return;
@@ -77,6 +92,7 @@ class _ImportItemState extends State<ImportItem> {
       final batch = _firestore.batch();
       final collectionRef = _firestore.collection('item_master_data');
 
+      // Process each row (skip header row)
       for (int i = 1; i < table.rows.length; i++) {
         try {
           final row = table.rows[i];
@@ -93,34 +109,26 @@ class _ImportItemState extends State<ImportItem> {
 
           final itemName = _parseString(row[1]);
           final itemAmount = Decimal.parse(_parseDouble(row[2]).toString());
-          final itemStatus = _parseBool(row[3]);
-          Timestamp timestamp;
+          final itemStatus = _parseBool(row[3]) ?? false;
 
-          if (row.length > 4 && row[4] != null) {
-            try {
-              final dateStr = row[4].toString();
-              timestamp = Timestamp.fromDate(
-                DateFormat('dd/MM/yyyy').parse(dateStr),
-              );
-            } catch (_) {
-              timestamp = Timestamp.now();
-            }
-          } else {
-            timestamp = Timestamp.now();
-          }
+          final timestamp = row.length > 4 && row[4] != null
+              ? _parseTimestamp(row[4].toString())
+              : Timestamp.now();
 
           final item = ItemMasterData(
             itemCode: itemCode,
             itemName: itemName,
             itemAmount: itemAmount.toDouble(),
-            itemStatus: itemStatus ?? false,
+            itemStatus: itemStatus,
             timestamp: timestamp,
           );
 
-          batch.set(collectionRef.doc(), item.toFirestore());
+          // Use itemCode as document ID to prevent duplicates
+          batch.set(collectionRef.doc(itemCode.toString()), item.toFirestore());
           _successCount++;
 
-          if (i % 10 == 0) {
+          // Update UI periodically
+          if (i % 10 == 0 || i == table.rows.length - 1) {
             setState(() {
               _statusMessage = 'Processing row $i/${table.rows.length - 1}...';
             });
@@ -132,34 +140,53 @@ class _ImportItemState extends State<ImportItem> {
         }
       }
 
-      setState(() {
-        _statusMessage = 'Uploading item data to Firestore....';
-      });
-
+      setState(() => _statusMessage = 'Uploading data to Firestore...');
       await batch.commit();
 
       setState(() {
         _isLoading = false;
         _statusMessage =
-            'Import completed!\n'
-            'Success: $_successCount\n'
-            'Errors: $_errorCount';
+            '''
+Import completed!
+Successful: $_successCount
+Failed: $_errorCount
+Total: ${table.rows.length - 1}''';
         _hasError = _errorCount > 0;
       });
     } catch (e) {
-      debugPrint('Import error: $e');
+      debugPrint('Excel processing error: $e');
       setState(() {
         _isLoading = false;
-        _statusMessage = 'Import failed: ${e.toString()}';
+        _statusMessage = 'Error processing Excel file: ${e.toString()}';
         _hasError = true;
       });
     }
   }
 
-  String _parseString(dynamic value) {
-    if (value == null) return '';
-    return value.toString().trim();
+  Timestamp _parseTimestamp(String dateString) {
+    try {
+      // Try common date formats
+      final formats = [
+        DateFormat('dd/MM/yyyy'),
+        DateFormat('MM/dd/yyyy'),
+        DateFormat('yyyy-MM-dd'),
+        DateFormat('dd-MM-yyyy'),
+      ];
+
+      for (final format in formats) {
+        try {
+          return Timestamp.fromDate(format.parse(dateString));
+        } catch (_) {}
+      }
+
+      // If none of the formats work, use current time
+      return Timestamp.now();
+    } catch (_) {
+      return Timestamp.now();
+    }
   }
+
+  String _parseString(dynamic value) => value?.toString().trim() ?? '';
 
   int? _parseInt(dynamic value) {
     if (value == null) return null;
@@ -179,65 +206,124 @@ class _ImportItemState extends State<ImportItem> {
     if (value == null) return null;
     if (value is bool) return value;
     final strValue = value.toString().trim().toLowerCase();
-
-    if (strValue == 'true' ||
+    return strValue == 'true' ||
         strValue == '1' ||
         strValue == 'yes' ||
-        strValue == 'y') {
-      return true;
-    }
-
-    if (strValue == 'false' ||
-        strValue == '0' ||
-        strValue == 'no' ||
-        strValue == 'n') {
-      return false;
-    }
-    return null; // Return null if parsing fails
+        strValue == 'y';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Import Item Master Data')),
+      appBar: AppBar(
+        title: const Text('Import Item Master Data'),
+        actions: [
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Import Item Master Datas from Excel',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Expected column order: \n'
-              '1. Item Code\n'
-              '2. Item Name\n'
-              '3. Item Amount\n'
-              '4. Item Status\n',
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _importData,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Select Excel File on Import'),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _hasError ? Colors.red[100] : Colors.green[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _statusMessage,
-                style: TextStyle(
-                  color: _hasError ? Colors.red[800] : Colors.green[800],
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Import Instructions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '1. Prepare an Excel file with the following columns in order:',
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('• Item Code (required, must be unique)'),
+                          Text('• Item Name (required)'),
+                          Text('• Item Amount (required)'),
+                          Text('• Item Status (true/false)'),
+                          Text('• Timestamp (optional)'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '2. The first row should be headers (will be skipped)',
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _fileName != null
+                          ? 'Selected file: $_fileName'
+                          : 'No file selected',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: _fileName != null ? Colors.blue : Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Select Excel File'),
+                onPressed: _isLoading ? null : _importData,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (_statusMessage.isNotEmpty)
+              Card(
+                color: _hasError ? Colors.red[50] : Colors.green[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        _hasError ? 'Import Status (Errors)' : 'Import Status',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _hasError
+                              ? Colors.red[800]
+                              : Colors.green[800],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _statusMessage,
+                        style: TextStyle(
+                          color: _hasError
+                              ? Colors.red[800]
+                              : Colors.green[800],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -260,7 +346,6 @@ class ItemMasterData {
     required this.timestamp,
   });
 
-  // convert a itemmasterdata object into a map object for firebase
   Map<String, dynamic> toFirestore() {
     return {
       'item_code': itemCode,

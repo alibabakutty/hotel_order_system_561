@@ -130,7 +130,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                   const SizedBox(height: 30),
-
                   // Item Master Card
                   _buildMasterCard(
                     context,
@@ -143,7 +142,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     },
                   ),
                   const SizedBox(height: 5),
-
                   // Supplier Master Card
                   _buildMasterCard(
                     context,
@@ -156,7 +154,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     },
                   ),
                   const SizedBox(height: 5),
-
                   // Table Master Card
                   _buildMasterCard(
                     context,
@@ -166,6 +163,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     color: Colors.orange.shade700,
                     onTap: () {
                       context.go('/cda_page', extra: 'table');
+                    },
+                  ),
+                  const SizedBox(height: 5),
+                  // Table Master Card
+                  _buildMasterCard(
+                    context,
+                    title: 'Import Items via Excel',
+                    subtitle: 'Import your items',
+                    icon: Icons.upload_file_outlined,
+                    color: Colors.green.shade700,
+                    onTap: () {
+                      context.go('/import_item');
                     },
                   ),
 

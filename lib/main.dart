@@ -6,6 +6,7 @@ import 'package:food_order_system/pages/admin_login.dart';
 import 'package:food_order_system/pages/cda_page.dart';
 import 'package:food_order_system/pages/admin_dashboard.dart';
 import 'package:food_order_system/pages/display_fetch_page.dart';
+import 'package:food_order_system/pages/import_item.dart';
 import 'package:food_order_system/pages/masters/item_master.dart';
 import 'package:food_order_system/pages/order_list.dart';
 import 'package:food_order_system/pages/orders/order-master/order_master.dart';
@@ -110,6 +111,10 @@ final _router = GoRouter(
               isDisplayMode: args['isDisplayMode'] ?? false,
             );
           },
+        ),
+        GoRoute(
+          path: '/import_item',
+          builder: (context, state) => const ImportItem(),
         ),
         GoRoute(
           path: '/order_list',
