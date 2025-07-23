@@ -45,6 +45,12 @@ class _OrderMasterState extends State<OrderMaster> {
     _loadAllItems();
   }
 
+  void _addNewRow() {
+    setState(() {
+      orderItems.add(OrderItem.empty());
+    });
+  }
+
   Future<void> _fetchSupplierData() async {
     try {
       final authUser = await widget.authService.getCurrentAuthUser();
@@ -400,9 +406,9 @@ class _OrderMasterState extends State<OrderMaster> {
                                             child: Row(
                                               children: [
                                                 SizedBox(
-                                                  width: 140,
+                                                  width: 40,
                                                   child: const Text(
-                                                    'ITEM',
+                                                    'S.No.',
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
@@ -411,9 +417,22 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     ),
                                                   ),
                                                 ),
-                                                const SizedBox(width: 8),
+                                                const SizedBox(width: 4),
                                                 SizedBox(
-                                                  width: 65,
+                                                  width: 115,
+                                                  child: const Text(
+                                                    'PRODUCT NAME',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                SizedBox(
+                                                  width: 45,
                                                   child: const Text(
                                                     'QTY',
                                                     style: TextStyle(
@@ -424,7 +443,20 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     ),
                                                   ),
                                                 ),
-                                                const SizedBox(width: 6),
+                                                const SizedBox(width: 4),
+                                                SizedBox(
+                                                  width: 50,
+                                                  child: const Text(
+                                                    'RATE',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
                                                 SizedBox(
                                                   width: 70,
                                                   child: const Text(
@@ -437,35 +469,10 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     ),
                                                   ),
                                                 ),
-                                                const SizedBox(width: 4),
-                                                SizedBox(
-                                                  width: 25,
-                                                  child: ElevatedButton.icon(
-                                                    onPressed: () => setState(
-                                                      () => orderItems.insert(
-                                                        0,
-                                                        OrderItemExtension.empty(),
-                                                      ),
-                                                    ),
-                                                    icon: const Icon(
-                                                      Icons.add,
-                                                      size: 15,
-                                                    ),
-                                                    label: const Text(''),
-                                                    style:
-                                                        ElevatedButton.styleFrom(
-                                                          padding:
-                                                              EdgeInsets.zero,
-                                                          minimumSize:
-                                                              Size.zero,
-                                                        ),
-                                                  ),
-                                                ),
                                               ],
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-
                                           for (
                                             int i = 0;
                                             i < orderItems.length;
@@ -485,6 +492,19 @@ class _OrderMasterState extends State<OrderMaster> {
                                                     () => orderItems[index] =
                                                         updatedItem,
                                                   ),
+                                              onItemSelected: () => setState(() {
+                                                // onaly add new row if this is the last item and it's not empty
+                                                if (i ==
+                                                        orderItems.length - 1 &&
+                                                    orderItems[i]
+                                                        .itemCode
+                                                        .isNotEmpty) {
+                                                  orderItems.add(
+                                                    OrderItemExtension.empty(),
+                                                  );
+                                                }
+                                              }),
+                                              onAddNewRow: _addNewRow,
                                             ),
                                         ],
                                       ),

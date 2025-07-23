@@ -92,8 +92,7 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
           widget.orderItems[index] = OrderItem(
             itemCode: selection.itemCode.toString(),
             itemName: selection.itemName,
-            itemAmount: selection.itemAmount,
-            itemStatus: selection.itemStatus,
+            itemRateAmount: selection.itemRateAmount,
             quantity: widget.orderItems[index].quantity,
           );
         });
@@ -137,7 +136,7 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
                           ),
                         ),
                         subtitle: Text(
-                          '₹${item.itemAmount}',
+                          '₹${item.itemRateAmount}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -313,8 +312,7 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
                                     widget.orderItems[index] = OrderItem(
                                       itemCode: item.itemCode,
                                       itemName: item.itemName,
-                                      itemAmount: item.itemAmount,
-                                      itemStatus: item.itemStatus,
+                                      itemRateAmount: item.itemRateAmount,
                                       quantity: item.quantity,
                                     );
                                   },
@@ -327,43 +325,11 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  '₹${item.itemAmount.toStringAsFixed(2)}',
+                                  '₹${item.itemRateAmount.toStringAsFixed(2)}',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Status
-                            SizedBox(
-                              width: statusWidth,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: item.itemStatus
-                                        ? Colors.green.withOpacity(0.2)
-                                        : Colors.orange.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    item.itemStatus
-                                        ? 'Available'
-                                        : 'Unavailable',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: item.itemStatus
-                                          ? Colors.green.shade800
-                                          : Colors.orange.shade800,
-                                    ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),

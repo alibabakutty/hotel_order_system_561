@@ -1,34 +1,26 @@
 class OrderItem {
   final String itemCode;
   final String itemName;
-  final double itemAmount;
-  final bool itemStatus;
   final double quantity;
+  final double itemRateAmount;
 
   OrderItem({
     required this.itemCode,
     required this.itemName,
-    required this.itemAmount,
-    required this.itemStatus,
     required this.quantity,
+    required this.itemRateAmount,
   });
 
   // Add this empty constructor
-  factory OrderItem.empty() => OrderItem(
-    itemCode: '',
-    itemName: '',
-    itemAmount: 0.0,
-    itemStatus: true,
-    quantity: 1.0,
-  );
+  factory OrderItem.empty() =>
+      OrderItem(itemCode: '', itemName: '', quantity: 1.0, itemRateAmount: 0.0);
 
   Map<String, dynamic> toMap() {
     return {
       'itemCode': itemCode,
       'itemName': itemName,
-      'itemAmount': itemAmount,
-      'itemStatus': itemStatus,
       'quantity': quantity,
+      'itemRateAmount': itemRateAmount,
     };
   }
 
@@ -36,9 +28,8 @@ class OrderItem {
     return OrderItem(
       itemCode: map['itemCode'] ?? '',
       itemName: map['itemName'] ?? '',
-      itemAmount: map['itemAmount']?.toDouble() ?? 0.0,
-      itemStatus: map['itemStatus'] ?? true,
       quantity: map['quantity']?.toDouble() ?? 0.0,
+      itemRateAmount: map['itemRateAmount']?.toDouble() ?? 0.0,
     );
   }
 }

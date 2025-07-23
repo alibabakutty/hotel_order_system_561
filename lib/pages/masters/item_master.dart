@@ -18,7 +18,8 @@ class _ItemMasterState extends State<ItemMaster> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _itemCodeController = TextEditingController();
   final TextEditingController _itemNameController = TextEditingController();
-  final TextEditingController _itemAmountController = TextEditingController();
+  final TextEditingController _itemRateAmountController =
+      TextEditingController();
   String? _selectedStatus;
 
   bool _isSubmitting = false;
@@ -59,7 +60,7 @@ class _ItemMasterState extends State<ItemMaster> {
           _itemMasterData = data;
           _itemCodeController.text = data.itemCode.toString();
           _itemNameController.text = data.itemName;
-          _itemAmountController.text = data.itemAmount.toString();
+          _itemRateAmountController.text = data.itemRateAmount.toString();
           _selectedStatus = data.itemStatus ? 'Active' : 'Inactive';
         });
       } else {
@@ -88,7 +89,7 @@ class _ItemMasterState extends State<ItemMaster> {
         final itemData = ItemMasterData(
           itemCode: int.parse(_itemCodeController.text.trim()),
           itemName: _itemNameController.text.trim(),
-          itemAmount: double.parse(_itemAmountController.text.trim()),
+          itemRateAmount: double.parse(_itemRateAmountController.text.trim()),
           itemStatus: _selectedStatus == 'Active',
           timestamp: _itemMasterData?.timestamp ?? Timestamp.now(),
         );
@@ -139,7 +140,7 @@ class _ItemMasterState extends State<ItemMaster> {
             // clear all fields after successful save
             _itemCodeController.clear();
             _itemNameController.clear();
-            _itemAmountController.clear();
+            _itemRateAmountController.clear();
             _itemMasterData = null;
             _formKey.currentState?.reset();
 
@@ -167,7 +168,7 @@ class _ItemMasterState extends State<ItemMaster> {
   void dispose() {
     _itemCodeController.dispose();
     _itemNameController.dispose();
-    _itemAmountController.dispose();
+    _itemRateAmountController.dispose();
     super.dispose();
   }
 
@@ -249,7 +250,7 @@ class _ItemMasterState extends State<ItemMaster> {
 
                       // Amount Field
                       TextFormField(
-                        controller: _itemAmountController,
+                        controller: _itemRateAmountController,
                         keyboardType: TextInputType.numberWithOptions(
                           decimal: true,
                         ),

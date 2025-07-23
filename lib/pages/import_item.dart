@@ -1,4 +1,4 @@
-import 'dart:io';
+// import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:decimal/decimal.dart';
 import 'package:file_picker/file_picker.dart';
@@ -108,7 +108,7 @@ class _ImportItemState extends State<ImportItem> {
           }
 
           final itemName = _parseString(row[1]);
-          final itemAmount = Decimal.parse(_parseDouble(row[2]).toString());
+          final itemRateAmount = Decimal.parse(_parseDouble(row[2]).toString());
           final itemStatus = _parseBool(row[3]) ?? false;
 
           final timestamp = row.length > 4 && row[4] != null
@@ -118,7 +118,7 @@ class _ImportItemState extends State<ImportItem> {
           final item = ItemMasterData(
             itemCode: itemCode,
             itemName: itemName,
-            itemAmount: itemAmount.toDouble(),
+            itemRateAmount: itemRateAmount.toDouble(),
             itemStatus: itemStatus,
             timestamp: timestamp,
           );
@@ -255,7 +255,7 @@ Total: ${table.rows.length - 1}''';
                         children: [
                           Text('• Item Code (required, must be unique)'),
                           Text('• Item Name (required)'),
-                          Text('• Item Amount (required)'),
+                          Text('• Item Rate Amount (required)'),
                           Text('• Item Status (true/false)'),
                           Text('• Timestamp (optional)'),
                         ],
@@ -334,14 +334,14 @@ Total: ${table.rows.length - 1}''';
 class ItemMasterData {
   final int itemCode;
   final String itemName;
-  final double itemAmount;
+  final double itemRateAmount;
   final bool itemStatus;
   final Timestamp timestamp;
 
   ItemMasterData({
     required this.itemCode,
     required this.itemName,
-    required this.itemAmount,
+    required this.itemRateAmount,
     required this.itemStatus,
     required this.timestamp,
   });
@@ -350,7 +350,7 @@ class ItemMasterData {
     return {
       'item_code': itemCode,
       'item_name': itemName,
-      'item_amount': itemAmount,
+      'item_rate_amount': itemRateAmount,
       'item_status': itemStatus,
       'timestamp': timestamp,
     };
