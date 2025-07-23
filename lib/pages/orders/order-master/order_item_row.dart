@@ -278,17 +278,27 @@ class _OrderItemRowState extends State<OrderItemRow> {
         });
       },
       onSelected: (ItemMasterData selection) {
+        final initialQuantity = 1.0;
+        final initialAmount = selection.itemRateAmount * initialQuantity;
+
+        // Update quantity controller
+        quantityController.text = initialQuantity.toStringAsFixed(0);
+        // Update amount controller
+        netAmountController.text = '₹${initialAmount.toStringAsFixed(2)}';
+
         widget.onUpdate(
           widget.index,
           OrderItem(
             itemCode: selection.itemCode.toString(),
             itemName: selection.itemName.capitalize(),
             itemRateAmount: selection.itemRateAmount,
-            quantity: widget.item.quantity,
+            quantity: initialQuantity,
           ),
         );
+
         widget.onItemSelected();
       },
+
       fieldViewBuilder: (context, controller, node, onFieldSubmitted) {
         return TextFormField(
           controller: controller,
