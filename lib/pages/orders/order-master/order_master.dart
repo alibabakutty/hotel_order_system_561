@@ -10,6 +10,7 @@ import 'package:food_order_system/pages/orders/order-master/order_item_row.dart'
 import 'package:food_order_system/pages/orders/order-master/order_utils.dart';
 import 'package:food_order_system/service/firebase_service.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderMaster extends StatefulWidget {
   final AuthService authService;
@@ -38,11 +39,66 @@ class _OrderMasterState extends State<OrderMaster> {
   bool _isLoadingItems = false;
   bool _isGuestInfoExpanded = true;
 
+  // order number tracking
+  int _orderCounter = 0;
+  String _currentOrderNumber = '';
+  DateTime? _lastResetDate;
+
   @override
   void initState() {
     super.initState();
+    _loadOrderCounter();
     _fetchSupplierData();
     _loadAllItems();
+  }
+
+  Future<void> _loadOrderCounter() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastResetString = prefs.getString('lastResetDate');
+    final savedCounter = prefs.getInt('orderCounter') ?? 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    if (lastResetString != null) {
+      _lastResetDate = DateTime.parse(lastResetString);
+    }
+
+    // Reset counter if it's a new day
+    if (_lastResetDate == null || today.isAfter(_lastResetDate!)) {
+      setState(() {
+        _orderCounter = 0;
+        _lastResetDate = today;
+      });
+      await prefs.setInt('orderCounter', 0);
+      await prefs.setString('lastResetDate', today.toIso8601String());
+    } else {
+      setState(() {
+        _orderCounter = savedCounter;
+      });
+    }
+  }
+
+  Future<void> _saveOrderCounter() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('orderCounter', _orderCounter);
+    if (_lastResetDate != null) {
+      await prefs.setString('lastResetDate', _lastResetDate!.toIso8601String());
+    }
+  }
+
+  String _generateOrderNumber() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Reset counter if it's a new day
+    if (_lastResetDate == null || today.isAfter(_lastResetDate!)) {
+      _orderCounter = 0;
+      _lastResetDate = today;
+      _saveOrderCounter();
+    }
+    _orderCounter++;
+    _saveOrderCounter();
+    return 'DINE-${_orderCounter.toString().padLeft(4, '0')}';
   }
 
   void _addNewRow() {
@@ -216,7 +272,7 @@ class _OrderMasterState extends State<OrderMaster> {
     );
   }
 
-  void _submitOrder() {
+  void _submitOrder() async {
     if (_formKey.currentState!.validate()) {
       if (orderItems.isEmpty ||
           (orderItems.length == 1 && orderItems[0].itemCode.isEmpty)) {
@@ -229,10 +285,20 @@ class _OrderMasterState extends State<OrderMaster> {
         return;
       }
 
+      if (_selectedTable == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a table first'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Order submitted for Table ${_selectedTable?.tableNumber ?? 'No Table'}',
+            'Order $_currentOrderNumber for Table ${_selectedTable!.tableNumber} submitted successfully!',
           ),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 3),
@@ -241,7 +307,7 @@ class _OrderMasterState extends State<OrderMaster> {
 
       setState(() {
         orderItems = [OrderItemExtension.empty()];
-        _selectedTable = null;
+        // Don't clear table or order number - keep them for next order
         _quantityController.clear();
         _maleController.clear();
         _femaleController.clear();
@@ -251,22 +317,26 @@ class _OrderMasterState extends State<OrderMaster> {
   }
 
   void _onTableSelected(TableMasterData? table) {
-    setState(() {
-      _selectedTable = table;
-      if (table == null) {
-        _showTableAllocation = false;
-      }
-    });
+    if (table != null && _selectedTable?.tableNumber != table.tableNumber) {
+      // Generate new order number when a new table is selected
+      setState(() {
+        _selectedTable = table;
+        _currentOrderNumber = _generateOrderNumber();
+      });
 
-    if (table != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Table ${table.tableNumber} selected (Capacity: ${table.tableCapacity})',
+            'Table ${table.tableNumber} selected - Order $_currentOrderNumber created',
           ),
           backgroundColor: Colors.green,
         ),
       );
+    } else if (table == null) {
+      setState(() {
+        _selectedTable = null;
+        _showTableAllocation = false;
+      });
     }
   }
 
@@ -353,6 +423,7 @@ class _OrderMasterState extends State<OrderMaster> {
                 },
                 selectedTable: _selectedTable?.tableNumber.toString(),
                 totalMembers: int.tryParse(_quantityController.text),
+                orderNumber: _currentOrderNumber,
               ),
 
               // Table Allocation Section

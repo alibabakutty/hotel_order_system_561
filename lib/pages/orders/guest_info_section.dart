@@ -9,6 +9,7 @@ class GuestInfoSection extends StatefulWidget {
   final Function() onTableAllocatePressed;
   final String? selectedTable;
   final int? totalMembers;
+  final String? orderNumber;
   final Function(bool)? onExpansionChanged;
 
   const GuestInfoSection({
@@ -21,6 +22,7 @@ class GuestInfoSection extends StatefulWidget {
     required this.onTableAllocatePressed,
     this.selectedTable,
     this.totalMembers,
+    this.orderNumber,
     this.onExpansionChanged,
   });
 
@@ -50,6 +52,25 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Row(
                 children: [
+                  if (widget.orderNumber != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Order: ${widget.orderNumber}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Colors.purple.shade800,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  if (widget.orderNumber != null) const SizedBox(width: 8),
                   if (widget.selectedTable != null)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -89,7 +110,7 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
                     ),
                   const Spacer(),
                   Text(
-                    'GUEST INFO',
+                    'GUEST',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
