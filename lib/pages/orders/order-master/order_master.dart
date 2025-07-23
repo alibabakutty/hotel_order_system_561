@@ -270,6 +270,18 @@ class _OrderMasterState extends State<OrderMaster> {
     }
   }
 
+  // Helper methods to calculate totals
+  double get _totalQuantity {
+    return orderItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  double get _totalAmount {
+    return orderItems.fold(
+      0,
+      (sum, item) => sum + (item.itemRateAmount * item.quantity),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -514,6 +526,39 @@ class _OrderMasterState extends State<OrderMaster> {
                               ),
 
                               const SizedBox(height: 16),
+                              // Totals Display
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Total Items: ${_totalQuantity.toStringAsFixed(_totalQuantity % 1 == 0 ? 0 : 2)}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Total Amount: ₹${_totalAmount.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
