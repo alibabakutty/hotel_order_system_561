@@ -255,34 +255,22 @@ class _OrderItemRowState extends State<OrderItemRow> {
   }
 
   Widget _buildItemSearchField(FocusNode focusNode) {
+    final textController = TextEditingController();
+
     return RawAutocomplete<ItemMasterData>(
       focusNode: focusNode,
-      textEditingController: TextEditingController(),
+      textEditingController: textController,
       optionsBuilder: (TextEditingValue textEditingValue) {
         if (widget.isLoadingItems) {
           return const Iterable<ItemMasterData>.empty();
         }
-
-        if (textEditingValue.text.isEmpty) {
-          return widget.allItems;
-        }
-
-        return widget.allItems.where((item) {
-          final searchTerm = textEditingValue.text.toLowerCase();
-          final matchesCode = item.itemCode.toString().toLowerCase().contains(
-            searchTerm,
-          );
-          final matchesName = item.itemName.toLowerCase().contains(searchTerm);
-          return matchesCode || matchesName;
-        });
+        return widget.allItems;
       },
       onSelected: (ItemMasterData selection) {
         final initialQuantity = 1.0;
         final initialAmount = selection.itemRateAmount * initialQuantity;
 
-        // Update quantity controller
         quantityController.text = initialQuantity.toStringAsFixed(0);
-        // Update amount controller
         netAmountController.text = '₹${initialAmount.toStringAsFixed(2)}';
 
         widget.onUpdate(
@@ -297,19 +285,32 @@ class _OrderItemRowState extends State<OrderItemRow> {
 
         widget.onItemSelected();
       },
-
       fieldViewBuilder: (context, controller, node, onFieldSubmitted) {
-        return TextFormField(
-          controller: controller,
-          focusNode: node,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'SEARCH BY CODE/NAME',
-            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            isDense: true,
+        return GestureDetector(
+          onTap: () {
+            node.requestFocus();
+            // Clear and refocus to ensure options show
+            controller.clear();
+            Future.delayed(Duration.zero, () => node.requestFocus());
+          },
+          child: AbsorbPointer(
+            child: TextFormField(
+              controller: controller,
+              focusNode: node,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'TAP TO SELECT ITEM',
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 8,
+                ),
+                isDense: true,
+              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              showCursor: false,
+              readOnly: true,
+            ),
           ),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          onTap: () => node.requestFocus(),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {

@@ -71,6 +71,10 @@ class _OrderMasterState extends State<OrderMaster> {
     _loadAllItems();
   }
 
+  bool _isDuplicateItem(String itemCode) {
+    return orderItems.where((item) => item.itemCode == itemCode).length > 1;
+  }
+
   Future<void> _loadOrderCounter() async {
     final prefs = await SharedPreferences.getInstance();
     final lastResetString = prefs.getString('lastResetDate');
@@ -121,9 +125,14 @@ class _OrderMasterState extends State<OrderMaster> {
   }
 
   void _addNewRow() {
-    setState(() {
-      orderItems.add(OrderItem.empty());
-    });
+    // Only add if last item is not empty and not a duplicate
+    if (orderItems.isNotEmpty &&
+        orderItems.last.itemCode.isNotEmpty &&
+        !_isDuplicateItem(orderItems.last.itemCode)) {
+      setState(() {
+        orderItems.add(OrderItem.empty());
+      });
+    }
   }
 
   Future<void> _fetchSupplierData() async {
@@ -390,7 +399,7 @@ class _OrderMasterState extends State<OrderMaster> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Order Management',
+              'ORDER MANAGEMENT',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -560,12 +569,12 @@ class _OrderMasterState extends State<OrderMaster> {
                                 ),
                                 const SizedBox(width: 2),
                                 SizedBox(
-                                  width: 95,
+                                  width: 87,
                                   child: Text('ITEM NAME', style: headerStyle),
                                 ),
                                 const SizedBox(width: 4),
                                 SizedBox(
-                                  width: 30,
+                                  width: 40,
                                   child: Text('QTY', style: headerStyle),
                                 ),
                                 const SizedBox(width: 8),
@@ -604,11 +613,25 @@ class _OrderMasterState extends State<OrderMaster> {
                                       onRemove: (index) => setState(
                                         () => orderItems.removeAt(index),
                                       ),
-                                      onUpdate: (index, updatedItem) =>
-                                          setState(
-                                            () =>
-                                                orderItems[index] = updatedItem,
-                                          ),
+                                      onUpdate: (index, updatedItem) {
+                                        setState(
+                                          () => orderItems[index] = updatedItem,
+                                        );
+                                        if (_isDuplicateItem(
+                                          updatedItem.itemCode,
+                                        )) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Item "${updatedItem.itemName}" already added. And this is additional quantity!',
+                                              ),
+                                              backgroundColor: Colors.blue,
+                                            ),
+                                          );
+                                        }
+                                      },
                                       onItemSelected: () => setState(() {
                                         if (i == orderItems.length - 1 &&
                                             orderItems[i].itemCode.isNotEmpty) {
