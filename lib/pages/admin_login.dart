@@ -124,9 +124,10 @@ class _AdminLoginState extends State<AdminLogin> {
                     _isSignUp
                         ? 'Create a new admin account'
                         : 'Sign in to access admin dashboard',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey[600],
+                      fontSize: 18,
+                    ),
                   ),
                 ],
               ),
@@ -142,6 +143,7 @@ class _AdminLoginState extends State<AdminLogin> {
                         controller: _usernameController,
                         decoration: InputDecoration(
                           labelText: 'Admin Username',
+                          labelStyle: TextStyle(fontSize: 16),
                           prefixIcon: const Icon(Icons.person_outlined),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -162,6 +164,7 @@ class _AdminLoginState extends State<AdminLogin> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Admin Email',
+                        labelStyle: TextStyle(fontSize: 16),
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -186,6 +189,7 @@ class _AdminLoginState extends State<AdminLogin> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
+                        labelStyle: TextStyle(fontSize: 16),
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
                           icon: Icon(

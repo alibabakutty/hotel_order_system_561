@@ -139,6 +139,18 @@ class FoodOrderApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(
+            fontFamily: 'Aptos Display',
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Aptos Display',
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       routerConfig: _router,
     );

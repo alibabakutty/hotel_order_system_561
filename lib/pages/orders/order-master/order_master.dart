@@ -44,6 +44,25 @@ class _OrderMasterState extends State<OrderMaster> {
   String _currentOrderNumber = '';
   DateTime? _lastResetDate;
 
+  // Define these styles in your _OrderMasterState class
+  final TextStyle headerStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 14,
+    color: Colors.deepPurple[800],
+  );
+
+  final TextStyle totalTextStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: Colors.deepPurple[800],
+  );
+
+  final TextStyle amountTextStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: Colors.green[800],
+  );
+
   @override
   void initState() {
     super.initState();
@@ -355,44 +374,70 @@ class _OrderMasterState extends State<OrderMaster> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                StreamBuilder(
-                  stream: Stream.periodic(const Duration(seconds: 1)),
-                  builder: (context, _) =>
-                      Text('${TimeOfDay.now().format(context)}  '),
-                ),
-                Text(
-                  '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-                ),
-              ],
+            Text(
+              'Order Management',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             Text(
-              'Make Order - ${getDisplayName(supplierUsername ?? 'Supplier')}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              '${getDisplayName(supplierUsername ?? 'SUPPLIER').toUpperCase()}',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.9),
+              ),
             ),
           ],
         ),
-        backgroundColor: Colors.orange.shade700,
+        backgroundColor: Colors.deepPurple[700],
+        elevation: 4,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go('/'),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: _logout,
-            tooltip: 'Logout ${supplierUsername ?? 'Supplier'}',
+            tooltip: 'Logout',
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(30),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${TimeOfDay.now().format(context)}',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                Text(
+                  '${DateTime.now().day}-${DateTime.now().month}-${DateTime.now().year}',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -401,254 +446,258 @@ class _OrderMasterState extends State<OrderMaster> {
           child: Column(
             children: [
               // Guest Info Section
-              GuestInfoSection(
-                quantityController: _quantityController,
-                maleController: _maleController,
-                femaleController: _femaleController,
-                kidsController: _kidsController,
-                onDistributePressed: _showMemberDistributionDialog,
-                onTableAllocatePressed: () {
-                  setState(() {
-                    _showTableAllocation = true;
-                    _isGuestInfoExpanded = true;
-                  });
-                },
-                onExpansionChanged: (isExpanded) {
-                  setState(() {
-                    _isGuestInfoExpanded = isExpanded;
-                    if (!isExpanded) {
-                      _showTableAllocation = false;
-                    }
-                  });
-                },
-                selectedTable: _selectedTable?.tableNumber.toString(),
-                totalMembers: int.tryParse(_quantityController.text),
-                orderNumber: _currentOrderNumber,
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: GuestInfoSection(
+                  quantityController: _quantityController,
+                  maleController: _maleController,
+                  femaleController: _femaleController,
+                  kidsController: _kidsController,
+                  onDistributePressed: _showMemberDistributionDialog,
+                  onTableAllocatePressed: () {
+                    setState(() {
+                      _showTableAllocation = true;
+                      _isGuestInfoExpanded = true;
+                    });
+                  },
+                  onExpansionChanged: (isExpanded) {
+                    setState(() {
+                      _isGuestInfoExpanded = isExpanded;
+                      if (!isExpanded) {
+                        _showTableAllocation = false;
+                      }
+                    });
+                  },
+                  selectedTable: _selectedTable?.tableNumber.toString(),
+                  totalMembers: int.tryParse(_quantityController.text),
+                  orderNumber: _currentOrderNumber,
+                ),
               ),
 
               // Table Allocation Section
               if (_isGuestInfoExpanded && _showTableAllocation) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 _isLoadingTables
                     ? const Center(child: CircularProgressIndicator())
-                    : SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.1,
-                        child: AllocateTableSection(
-                          selectedTable: _selectedTable,
-                          onTableSelected: _onTableSelected,
+                    : Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: AllocateTableSection(
+                            selectedTable: _selectedTable,
+                            onTableSelected: _onTableSelected,
+                          ),
                         ),
                       ),
               ],
 
               // Order Items Section
+              const SizedBox(height: 4),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Card(
-                        elevation: 3,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Order Items',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                child: Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        // Header (Table Number & Title)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'ORDER ITEMS',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple[800],
                               ),
-                              const SizedBox(height: 16),
-                              Scrollable(
-                                axisDirection: AxisDirection.right,
-                                viewportBuilder: (context, offset) {
-                                  return SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: MediaQuery.of(
-                                          context,
-                                        ).size.width,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 4.0,
-                                              horizontal: 2.0,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              borderRadius:
-                                                  BorderRadius.circular(4.0),
-                                            ),
-                                            width: 1000,
-                                            height: 30,
-                                            child: Row(
-                                              children: [
-                                                SizedBox(
-                                                  width: 40,
-                                                  child: const Text(
-                                                    'S.No.',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                SizedBox(
-                                                  width: 115,
-                                                  child: const Text(
-                                                    'PRODUCT NAME',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                SizedBox(
-                                                  width: 45,
-                                                  child: const Text(
-                                                    'QTY',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                SizedBox(
-                                                  width: 50,
-                                                  child: const Text(
-                                                    'RATE',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                SizedBox(
-                                                  width: 70,
-                                                  child: const Text(
-                                                    'AMOUNT',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          for (
-                                            int i = 0;
-                                            i < orderItems.length;
-                                            i++
-                                          )
-                                            OrderItemRow(
-                                              index: i,
-                                              item: orderItems[i],
-                                              allItems: _allItems,
-                                              isLoadingItems: _isLoadingItems,
-                                              onRemove: (index) => setState(
-                                                () =>
-                                                    orderItems.removeAt(index),
-                                              ),
-                                              onUpdate: (index, updatedItem) =>
-                                                  setState(
-                                                    () => orderItems[index] =
-                                                        updatedItem,
-                                                  ),
-                                              onItemSelected: () => setState(() {
-                                                // onaly add new row if this is the last item and it's not empty
-                                                if (i ==
-                                                        orderItems.length - 1 &&
-                                                    orderItems[i]
-                                                        .itemCode
-                                                        .isNotEmpty) {
-                                                  orderItems.add(
-                                                    OrderItemExtension.empty(),
-                                                  );
-                                                }
-                                              }),
-                                              onAddNewRow: _addNewRow,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              const SizedBox(height: 16),
-                              // Totals Display
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Total Items: ${_totalQuantity.toStringAsFixed(_totalQuantity % 1 == 0 ? 0 : 2)}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Total Amount: ₹${_totalAmount.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green.shade800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: _submitOrder,
-                                  icon: const Icon(Icons.check),
-                                  label: const Text('Submit Order'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green.shade700,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
+                            ),
+                            if (_selectedTable != null)
+                              Chip(
+                                label: Text(
+                                  'Table ${_selectedTable!.tableNumber}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                backgroundColor: Colors.deepPurple[400],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // **Table Header (Fixed - Scrolls Horizontally)**
+                        SingleChildScrollView(
+                          scrollDirection:
+                              Axis.horizontal, // Allow horizontal scroll
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8.0,
+                              horizontal: 12.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple[50],
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Colors.deepPurple[500]!,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 30,
+                                  child: Text('NO.', style: headerStyle),
+                                ),
+                                const SizedBox(width: 2),
+                                SizedBox(
+                                  width: 95,
+                                  child: Text('ITEM NAME', style: headerStyle),
+                                ),
+                                const SizedBox(width: 4),
+                                SizedBox(
+                                  width: 30,
+                                  child: Text('QTY', style: headerStyle),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 60,
+                                  child: Text('RATE', style: headerStyle),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 90,
+                                  child: Text('AMOUNT', style: headerStyle),
+                                ),
+                                const SizedBox(width: 40),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // **Scrollable Order Items (Vertical + Horizontal)**
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection:
+                                Axis.vertical, // Primary scroll (vertical)
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis
+                                  .horizontal, // Secondary scroll (horizontal)
+                              child: Column(
+                                children: [
+                                  for (int i = 0; i < orderItems.length; i++)
+                                    OrderItemRow(
+                                      index: i,
+                                      item: orderItems[i],
+                                      allItems: _allItems,
+                                      isLoadingItems: _isLoadingItems,
+                                      onRemove: (index) => setState(
+                                        () => orderItems.removeAt(index),
+                                      ),
+                                      onUpdate: (index, updatedItem) =>
+                                          setState(
+                                            () =>
+                                                orderItems[index] = updatedItem,
+                                          ),
+                                      onItemSelected: () => setState(() {
+                                        if (i == orderItems.length - 1 &&
+                                            orderItems[i].itemCode.isNotEmpty) {
+                                          orderItems.add(
+                                            OrderItemExtension.empty(),
+                                          );
+                                        }
+                                      }),
+                                      onAddNewRow: _addNewRow,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // **Totals & Submit Button (Fixed at Bottom)**
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.deepPurple[100]!),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Total Items:', style: totalTextStyle),
+                                  Text(
+                                    _totalQuantity.toStringAsFixed(
+                                      _totalQuantity % 1 == 0 ? 0 : 2,
+                                    ),
+                                    style: totalTextStyle,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Total Amount:', style: totalTextStyle),
+                                  Text(
+                                    '₹${_totalAmount.toStringAsFixed(2)}',
+                                    style: amountTextStyle,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _submitOrder,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple[700],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'SUBMIT ORDER',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

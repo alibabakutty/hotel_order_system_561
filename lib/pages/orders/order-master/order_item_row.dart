@@ -105,11 +105,10 @@ class _OrderItemRowState extends State<OrderItemRow> {
                   ),
                 ),
               ),
-              const SizedBox(width: 4),
 
               // Product Name
               SizedBox(
-                width: 300,
+                width: 280,
                 height: 32,
                 child: widget.item.itemCode.isEmpty
                     ? _buildItemSearchField(focusNode)
@@ -153,7 +152,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(width: 155),
+              const SizedBox(width: 131),
               // Qty
               SizedBox(
                 width: 40,
@@ -290,7 +289,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
           widget.index,
           OrderItem(
             itemCode: selection.itemCode.toString(),
-            itemName: selection.itemName.capitalize(),
+            itemName: selection.itemName.toUpperCase(),
             itemRateAmount: selection.itemRateAmount,
             quantity: initialQuantity,
           ),
@@ -305,7 +304,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
           focusNode: node,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
-            hintText: 'Search by code/name',
+            hintText: 'SEARCH BY CODE/NAME',
             contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             isDense: true,
           ),
@@ -333,7 +332,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
                           vertical: 4.0,
                         ),
                         title: Text(
-                          '${item.itemCode} - ${item.itemName.capitalize()} - ₹${item.itemRateAmount}',
+                          '${item.itemCode} - ${item.itemName.toUpperCase()} - ₹${item.itemRateAmount}',
                           style: const TextStyle(fontSize: 13),
                         ),
                         onTap: () => onSelected(item),
@@ -344,12 +343,5 @@ class _OrderItemRowState extends State<OrderItemRow> {
         );
       },
     );
-  }
-}
-
-extension StringExtension on String {
-  String capitalize() {
-    if (isEmpty) return this;
-    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

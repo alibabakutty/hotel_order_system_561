@@ -105,9 +105,10 @@ class _SupplierLoginState extends State<SupplierLogin> {
                   const SizedBox(height: 8),
                   Text(
                     'Sign in to take order',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey[600],
+                      fontSize: 18,
+                    ),
                   ),
                 ],
               ),
@@ -123,6 +124,7 @@ class _SupplierLoginState extends State<SupplierLogin> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Supplier ID',
+                        labelStyle: TextStyle(fontSize: 16),
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -147,6 +149,7 @@ class _SupplierLoginState extends State<SupplierLogin> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
+                        labelStyle: TextStyle(fontSize: 16),
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
                           icon: Icon(
