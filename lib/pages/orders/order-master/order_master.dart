@@ -261,114 +261,6 @@ class _OrderMasterState extends State<OrderMaster> {
     }
   }
 
-  void _showMemberDistributionDialog() {
-    final totalMembers = int.tryParse(_quantityController.text) ?? 0;
-    bool maleEntered = false, femaleEntered = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          void updateCounts({String? changedField}) {
-            int male = int.tryParse(_maleController.text) ?? 0;
-            int female = int.tryParse(_femaleController.text) ?? 0;
-
-            if (changedField == 'male')
-              maleEntered = _maleController.text.isNotEmpty;
-            if (changedField == 'female')
-              femaleEntered = _femaleController.text.isNotEmpty;
-
-            if (maleEntered && femaleEntered) {
-              int kids = totalMembers - male - female;
-              _kidsController.text = kids >= 0 ? kids.toString() : '0';
-              if (kids < 0) _femaleController.text = (female + kids).toString();
-            }
-          }
-
-          return AlertDialog(
-            title: Text('Distribute $totalMembers Members'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _maleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Male Count',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.man),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => updateCounts(changedField: 'male'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _femaleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Female Count',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.woman),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => updateCounts(changedField: 'female'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _kidsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Kids Count (Auto)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.child_care),
-                      filled: true,
-                      enabled: false,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  int male = int.tryParse(_maleController.text) ?? 0;
-                  int female = int.tryParse(_femaleController.text) ?? 0;
-                  int kids = int.tryParse(_kidsController.text) ?? 0;
-
-                  if (male + female + kids == totalMembers) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Saved: $male Male, $female Female, $kids Kids',
-                        ),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Total must match member count'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade700,
-                ),
-                child: const Text('Confirm'),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   void _submitOrder() async {
     if (_formKey.currentState!.validate()) {
       if (orderItems.isEmpty ||
@@ -576,7 +468,6 @@ class _OrderMasterState extends State<OrderMaster> {
                   maleController: _maleController,
                   femaleController: _femaleController,
                   kidsController: _kidsController,
-                  onDistributePressed: _showMemberDistributionDialog,
                   onTableAllocatePressed: () {
                     setState(() {
                       _showTableAllocation = true;
@@ -660,7 +551,7 @@ class _OrderMasterState extends State<OrderMaster> {
                                   width: 90,
                                   child: Text('AMOUNT', style: headerStyle),
                                 ),
-                                const SizedBox(width: 40),
+                                const SizedBox(width: 8),
                               ],
                             ),
                           ),

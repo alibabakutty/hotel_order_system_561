@@ -5,7 +5,6 @@ class GuestInfoSection extends StatefulWidget {
   final TextEditingController maleController;
   final TextEditingController femaleController;
   final TextEditingController kidsController;
-  final Function() onDistributePressed;
   final Function() onTableAllocatePressed;
   final String? selectedTable;
   final int? totalMembers;
@@ -18,7 +17,6 @@ class GuestInfoSection extends StatefulWidget {
     required this.maleController,
     required this.femaleController,
     required this.kidsController,
-    required this.onDistributePressed,
     required this.onTableAllocatePressed,
     this.selectedTable,
     this.totalMembers,
@@ -32,6 +30,29 @@ class GuestInfoSection extends StatefulWidget {
 
 class _GuestInfoSectionState extends State<GuestInfoSection> {
   bool _isExpanded = true;
+  bool _maleEntered = false;
+  bool _femaleEntered = false;
+
+  void _updateCounts({String? changedField}) {
+    int male = int.tryParse(widget.maleController.text) ?? 0;
+    int female = int.tryParse(widget.femaleController.text) ?? 0;
+    final totalMembers = int.tryParse(widget.quantityController.text) ?? 0;
+
+    if (changedField == 'male') {
+      _maleEntered = widget.maleController.text.isNotEmpty;
+    }
+    if (changedField == 'female') {
+      _femaleEntered = widget.femaleController.text.isNotEmpty;
+    }
+
+    if (_maleEntered && _femaleEntered) {
+      int kids = totalMembers - male - female;
+      widget.kidsController.text = kids >= 0 ? kids.toString() : '0';
+      if (kids < 0) {
+        widget.femaleController.text = (female + kids).toString();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,16 +154,47 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
                 children: [
                   _buildIconButton(
                     icon: Icons.table_restaurant,
-                    color: Colors.green.shade700,
+                    color: Colors.teal.shade700,
                     onPressed: widget.onTableAllocatePressed,
                   ),
-                  const SizedBox(width: 6),
-                  _buildNumberInput(),
-                  const SizedBox(width: 6),
-                  _buildIconButton(
-                    icon: Icons.group_add,
-                    color: Colors.orange.shade700,
-                    onPressed: widget.onDistributePressed,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildInputWithIcon(
+                      controller: widget.quantityController,
+                      icon: Icons.group,
+                      iconColor: Colors.blue.shade700,
+                      label: 'Total',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildInputWithIcon(
+                      controller: widget.maleController,
+                      icon: Icons.man,
+                      iconColor: Colors.blue.shade700,
+                      label: 'Male',
+                      onChanged: (_) => _updateCounts(changedField: 'male'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildInputWithIcon(
+                      controller: widget.femaleController,
+                      icon: Icons.woman,
+                      iconColor: Colors.pink.shade600,
+                      label: 'Female',
+                      onChanged: (_) => _updateCounts(changedField: 'female'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildInputWithIcon(
+                      controller: widget.kidsController,
+                      icon: Icons.child_care,
+                      iconColor: Colors.amber.shade800,
+                      label: 'Kids',
+                      isEnabled: false,
+                    ),
                   ),
                 ],
               ),
@@ -174,20 +226,54 @@ class _GuestInfoSectionState extends State<GuestInfoSection> {
     );
   }
 
-  Widget _buildNumberInput() {
-    return SizedBox(
-      width: 60,
-      height: 36,
-      child: TextFormField(
-        controller: widget.quantityController,
-        textAlign: TextAlign.center,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          isDense: true,
-        ),
-        style: const TextStyle(fontSize: 14),
-        keyboardType: TextInputType.number,
+  Widget _buildInputWithIcon({
+    required TextEditingController controller,
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    bool isEnabled = true,
+    Function(String)? onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.2),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(6),
+                bottomLeft: Radius.circular(6),
+              ),
+            ),
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              enabled: isEnabled,
+              decoration: InputDecoration(
+                labelText: label,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                isDense: true,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              style: const TextStyle(fontSize: 14),
+              keyboardType: TextInputType.number,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
       ),
     );
   }

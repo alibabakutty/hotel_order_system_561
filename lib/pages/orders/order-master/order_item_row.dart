@@ -141,7 +141,9 @@ class _OrderItemRowState extends State<OrderItemRow> {
         // First Row - S.No and Product Name
         Container(
           padding: const EdgeInsets.symmetric(vertical: 2.0),
-          width: 1000,
+          width:
+              MediaQuery.of(context).size.width * 0.95, // 90% of screen width
+
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -189,7 +191,9 @@ class _OrderItemRowState extends State<OrderItemRow> {
         // Second Row - Qty, Rate, Amount, Buttons
         Container(
           padding: const EdgeInsets.symmetric(vertical: 2.0),
-          width: 1000,
+          width:
+              MediaQuery.of(context).size.width * 0.95, // 90% of screen width
+
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
