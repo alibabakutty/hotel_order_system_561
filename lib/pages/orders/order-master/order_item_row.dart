@@ -142,7 +142,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 2.0),
           width:
-              MediaQuery.of(context).size.width * 0.95, // 90% of screen width
+              MediaQuery.of(context).size.width * 0.99, // 90% of screen width
 
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -192,7 +192,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 2.0),
           width:
-              MediaQuery.of(context).size.width * 0.95, // 90% of screen width
+              MediaQuery.of(context).size.width * 0.99, // 90% of screen width
 
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -278,7 +278,10 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 child: IconButton(
                   icon: const Icon(Icons.add, color: Colors.green, size: 16),
                   padding: EdgeInsets.zero,
-                  onPressed: widget.onAddNewRow,
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    widget.onAddNewRow();
+                  },
                 ),
               ),
               const SizedBox(width: 2),
@@ -289,7 +292,10 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 child: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red, size: 16),
                   padding: EdgeInsets.zero,
-                  onPressed: () => widget.onRemove(widget.index),
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    widget.onRemove(widget.index);
+                  },
                 ),
               ),
             ],

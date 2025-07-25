@@ -35,7 +35,9 @@ class OrderItem {
       itemName: itemName ?? this.itemName,
       quantity: quantity ?? this.quantity,
       itemRateAmount: itemRateAmount ?? this.itemRateAmount,
-      itemNetAmount: itemNetAmount ?? this.itemNetAmount, // Preserve the original itemNetAmount
+      itemNetAmount:
+          itemNetAmount ??
+          this.itemNetAmount, // Preserve the original itemNetAmount
     );
   }
 

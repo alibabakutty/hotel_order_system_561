@@ -177,6 +177,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       context.go('/import_item');
                     },
                   ),
+                  const SizedBox(height: 5),
+                  // Table Master Card
+                  _buildMasterCard(
+                    context,
+                    title: 'Orders History',
+                    subtitle: 'Preview all orders',
+                    icon: Icons.history_outlined,
+                    color: Colors.purple.shade700,
+                    onTap: () {
+                      context.go('/order_history');
+                    },
+                  ),
 
                   // Spacer to push content up
                   const Spacer(),

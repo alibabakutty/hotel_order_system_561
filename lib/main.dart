@@ -2,18 +2,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:food_order_system/authentication/auth_service.dart';
 import 'package:food_order_system/firebase_options.dart';
-import 'package:food_order_system/pages/admin_login.dart';
+import 'package:food_order_system/pages/login_pages/admin_login.dart';
 import 'package:food_order_system/pages/cda_page.dart';
 import 'package:food_order_system/pages/admin_dashboard.dart';
-import 'package:food_order_system/pages/display_fetch_page.dart';
+import 'package:food_order_system/pages/fetch_pages/display_fetch_page.dart';
 import 'package:food_order_system/pages/import_item.dart';
 import 'package:food_order_system/pages/masters/item_master.dart';
-import 'package:food_order_system/pages/order_list.dart';
+import 'package:food_order_system/pages/order_history.dart';
 import 'package:food_order_system/pages/orders/order-master/order_master.dart';
-import 'package:food_order_system/pages/supplier_login.dart';
+import 'package:food_order_system/pages/login_pages/supplier_login.dart';
 import 'package:food_order_system/pages/masters/supplier_master.dart';
 import 'package:food_order_system/pages/masters/table_master.dart';
-import 'package:food_order_system/pages/update_fetch_page.dart';
+import 'package:food_order_system/pages/fetch_pages/update_fetch_page.dart';
 import 'package:food_order_system/pages/welcome_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -117,8 +117,8 @@ final _router = GoRouter(
           builder: (context, state) => const ImportItem(),
         ),
         GoRoute(
-          path: '/order_list',
-          builder: (context, state) => const OrderList(),
+          path: '/order_history',
+          builder: (context, state) => const OrderHistory(),
         ),
       ],
     ),

@@ -7,55 +7,7 @@ import 'package:food_order_system/models/table_master_data.dart';
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Collections
-  CollectionReference get itemMasterData => _db.collection('item_master_data');
-  CollectionReference get supplierMasterData =>
-      _db.collection('supplier_master_data');
-  CollectionReference get tableMasterData =>
-      _db.collection('table_master_data');
-  CollectionReference get orders => _db.collection('orders');
-  CollectionReference get counters => _db.collection('counters');
-
   FirebaseService();
-
-  // Add complete order with items to Firestore
-  Future<bool> addOrderMasterData({
-    required List<OrderItem> orderItems,
-    required TableMasterData table,
-    required String orderNumber,
-    required double totalQty,
-    required double totalAmount,
-    required int maleCount,
-    required int femaleCount,
-    required int kidsCount,
-    required String supplierName, // 👈 New parameter
-  }) async {
-    try {
-      int guestCount = maleCount + femaleCount + kidsCount;
-
-      DocumentReference orderRef = await _db.collection('orders').add({
-        'order_number': orderNumber,
-        'table_number': table.tableNumber,
-        'supplier_name': supplierName, // 👈 Save to Firestore
-        'total_quantity': totalQty,
-        'total_amount': totalAmount,
-        'guest_count': guestCount,
-        'male_count': maleCount,
-        'female_count': femaleCount,
-        'kids_count': kidsCount,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      for (OrderItem item in orderItems) {
-        await orderRef.collection('items').add(item.toFirestore());
-      }
-
-      return true;
-    } catch (e) {
-      print('Error adding full order data: $e');
-      return false;
-    }
-  }
 
   // add item master data to firestore
   Future<bool> addItemMasterData(ItemMasterData itemMasterData) async {
@@ -94,6 +46,52 @@ class FirebaseService {
       return true;
     } catch (e) {
       print('Error adding table master data: $e');
+      return false;
+    }
+  }
+
+  // Add complete order with items to Firestore
+  Future<bool> addOrderMasterData({
+    required List<OrderItem> orderItems,
+    required TableMasterData table,
+    required String orderNumber,
+    required double totalQty,
+    required double totalAmount,
+    required int maleCount,
+    required int femaleCount,
+    required int kidsCount,
+    required String supplierName, // 👈 New parameter
+  }) async {
+    try {
+      int guestCount = maleCount + femaleCount + kidsCount;
+
+      DocumentReference orderRef = await _db.collection('orders').add({
+        'order_number': orderNumber,
+        'table_number': table.tableNumber,
+        'supplier_name': supplierName, // 👈 Save to Firestore
+        'total_quantity': totalQty,
+        'total_amount': totalAmount,
+        'guest_count': guestCount,
+        'male_count': maleCount,
+        'female_count': femaleCount,
+        'kids_count': kidsCount,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      for (OrderItem item in orderItems) {
+        // calculate net amount before storing
+        double netAmount = item.quantity * item.itemRateAmount;
+        // Get the base item data
+        Map<String, dynamic> itemData = item.toFirestore();
+        // override the netamount
+        itemData['itemNetAmount'] = netAmount;
+        // now store in firestore
+        await orderRef.collection('items').add(itemData);
+      }
+
+      return true;
+    } catch (e) {
+      print('Error adding full order data: $e');
       return false;
     }
   }
@@ -172,6 +170,129 @@ class FirebaseService {
     return null;
   }
 
+  // Update return type and conversion
+  Future<List<Map<String, dynamic>>> getOrdersByDate(String dateString) async {
+    final date = DateTime.parse(dateString);
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('orders')
+        .where(
+          'timestamp',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+        .get();
+
+    return querySnapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'id': doc.id, // Include the document ID
+        ...data,
+      };
+    }).toList();
+  }
+
+  // Similarly update the other methods
+  Future<List<Map<String, dynamic>>> getOrdersByDateRange(
+    String startDateString,
+    String endDateString,
+  ) async {
+    try {
+      DateTime startDate = DateTime.parse(startDateString);
+      DateTime endDate = DateTime.parse(endDateString);
+      DateTime adjustedEndDate = DateTime(
+        endDate.year,
+        endDate.month,
+        endDate.day,
+        23,
+        59,
+        59,
+      );
+
+      QuerySnapshot snapshot = await _db
+          .collection('orders')
+          .where('timestamp', isGreaterThanOrEqualTo: startDate)
+          .where('timestamp', isLessThanOrEqualTo: adjustedEndDate)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      print('Error fetching orders by date range: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getFilteredOrders({
+    String? dateString,
+    String? supplierName,
+    int? tableNumber,
+  }) async {
+    try {
+      Query query = _db.collection('orders');
+
+      if (dateString != null) {
+        DateTime date = DateTime.parse(dateString);
+        DateTime startOfDay = DateTime(date.year, date.month, date.day);
+        DateTime endOfDay = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          23,
+          59,
+          59,
+        );
+        query = query
+            .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
+            .where('timestamp', isLessThanOrEqualTo: endOfDay);
+      }
+
+      if (supplierName != null) {
+        query = query.where('supplier_name', isEqualTo: supplierName);
+      }
+
+      if (tableNumber != null) {
+        query = query.where('table_number', isEqualTo: tableNumber);
+      }
+
+      query = query.orderBy('timestamp', descending: true);
+
+      QuerySnapshot snapshot = await query.get();
+      return snapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      print('Error fetching filtered orders: $e');
+      return [];
+    }
+  }
+
+  // Add this to your firebase_service.dart
+  Future<List<Map<String, dynamic>>> getOrderItems(String orderId) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .collection('items')
+          .get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return {'id': doc.id, ...data};
+      }).toList();
+    } catch (e) {
+      throw 'Error fetching order items: $e';
+    }
+  }
+
   // fetch all Items
   Future<List<ItemMasterData>> getAllItems() async {
     try {
@@ -224,6 +345,60 @@ class FirebaseService {
           .toList();
     } catch (e) {
       print('Error fetching all tables: $e');
+      return [];
+    }
+  }
+
+  // Fetch all orders from Firestore
+  Future<List<Map<String, dynamic>>> getAllOrders() async {
+    try {
+      QuerySnapshot snapshot = await _db
+          .collection('orders')
+          .orderBy('timestamp', descending: true) // Most recent first
+          .get();
+
+      return snapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Include document ID
+        return data;
+      }).toList();
+    } catch (e) {
+      print('Error fetching all orders: $e');
+      return [];
+    }
+  }
+
+  // Fetch all orders with their items
+  Future<List<Map<String, dynamic>>> getAllOrdersWithItems() async {
+    try {
+      QuerySnapshot ordersSnapshot = await _db
+          .collection('orders')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      List<Map<String, dynamic>> orders = [];
+
+      for (var orderDoc in ordersSnapshot.docs) {
+        // Get order data
+        Map<String, dynamic> orderData =
+            orderDoc.data() as Map<String, dynamic>;
+        orderData['id'] = orderDoc.id;
+
+        // Get items for this order
+        QuerySnapshot itemsSnapshot = await orderDoc.reference
+            .collection('items')
+            .get();
+        List<Map<String, dynamic>> items = itemsSnapshot.docs
+            .map((itemDoc) => itemDoc.data() as Map<String, dynamic>)
+            .toList();
+
+        orderData['items'] = items;
+        orders.add(orderData);
+      }
+
+      return orders;
+    } catch (e) {
+      print('Error fetching all orders with items: $e');
       return [];
     }
   }
