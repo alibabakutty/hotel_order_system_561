@@ -4,7 +4,6 @@ import 'package:food_order_system/authentication/auth_service.dart';
 import 'package:food_order_system/models/item_master_data.dart';
 import 'package:food_order_system/models/order_item_data.dart';
 import 'package:food_order_system/models/table_master_data.dart';
-import 'package:food_order_system/pages/orders/allocate_table_section.dart';
 import 'package:food_order_system/pages/orders/guest_info_section.dart';
 import 'package:food_order_system/pages/orders/order-master/order_item_row.dart';
 import 'package:food_order_system/pages/orders/order-master/order_utils.dart';
@@ -32,9 +31,10 @@ class _OrderMasterState extends State<OrderMaster> {
   final _kidsController = TextEditingController();
 
   bool _showTableAllocation = false;
-  final _isLoadingTables = false;
+  bool _isLoadingTables = false;
   TableMasterData? _selectedTable;
   final FirebaseService _firebaseService = FirebaseService();
+  List<TableMasterData> _availableTables = [];
   List<ItemMasterData> _allItems = [];
   bool _isLoadingItems = false;
   bool _isGuestInfoExpanded = true;
@@ -69,6 +69,75 @@ class _OrderMasterState extends State<OrderMaster> {
     _loadOrderCounter();
     _fetchSupplierData();
     _loadAllItems();
+  }
+
+  Future<void> _loadAvailableTables() async {
+    setState(() => _isLoadingTables = true);
+    try {
+      final tables = await _firebaseService.getAllTables();
+      setState(() {
+        _availableTables = tables
+            .where((table) => table.tableAvailability)
+            .toList();
+      });
+    } catch (e) {
+      debugPrint('Error loading tables: $e');
+    } finally {
+      setState(() => _isLoadingTables = false);
+    }
+  }
+
+  Future<void> _showTableSelectionDialog(BuildContext context) async {
+    await _loadAvailableTables(); // Load tables before showing dialog
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select a Table'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: _isLoadingTables
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _availableTables.length,
+                    itemBuilder: (context, index) {
+                      final table = _availableTables[index];
+                      final isSelected =
+                          _selectedTable?.tableNumber == table.tableNumber;
+
+                      return ListTile(
+                        leading: Radio<TableMasterData>(
+                          value: table,
+                          groupValue: _selectedTable,
+                          onChanged: (t) {
+                            _onTableSelected(t);
+                            Navigator.pop(context);
+                          },
+                        ),
+                        title: Text('Table ${table.tableNumber}'),
+                        subtitle: Text('Capacity: ${table.tableCapacity}'),
+                        trailing: isSelected
+                            ? const Icon(Icons.check, color: Colors.green)
+                            : null,
+                        onTap: () {
+                          _onTableSelected(table);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   bool _isDuplicateItem(String itemCode) {
@@ -513,6 +582,7 @@ class _OrderMasterState extends State<OrderMaster> {
                       _showTableAllocation = true;
                       _isGuestInfoExpanded = true;
                     });
+                    _showTableSelectionDialog(context);
                   },
                   onExpansionChanged: (isExpanded) {
                     setState(() {
@@ -533,19 +603,7 @@ class _OrderMasterState extends State<OrderMaster> {
                 const SizedBox(height: 4),
                 _isLoadingTables
                     ? const Center(child: CircularProgressIndicator())
-                    : Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: AllocateTableSection(
-                            selectedTable: _selectedTable,
-                            onTableSelected: _onTableSelected,
-                          ),
-                        ),
-                      ),
+                    : SizedBox(height: 4),
               ],
 
               // Order Items Section
