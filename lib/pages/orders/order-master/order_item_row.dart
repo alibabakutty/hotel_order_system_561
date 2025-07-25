@@ -121,6 +121,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
       itemName: selectedItem.itemName,
       itemRateAmount: selectedItem.itemRateAmount,
       quantity: 1.0,
+      itemNetAmount: selectedItem.itemRateAmount * 1.0,
     );
 
     _quantityController.text = '1';

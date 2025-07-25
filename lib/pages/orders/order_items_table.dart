@@ -94,6 +94,8 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
             itemName: selection.itemName,
             itemRateAmount: selection.itemRateAmount,
             quantity: widget.orderItems[index].quantity,
+            itemNetAmount:
+                selection.itemRateAmount * widget.orderItems[index].quantity,
           );
         });
       },
@@ -309,11 +311,16 @@ class _OrderItemsTableState extends State<OrderItemsTable> {
                                   ),
                                   keyboardType: TextInputType.number,
                                   onChanged: (value) {
+                                    final quantity =
+                                        double.tryParse(value) ?? 0.0;
+                                    final amount =
+                                        item.itemRateAmount * quantity;
                                     widget.orderItems[index] = OrderItem(
                                       itemCode: item.itemCode,
                                       itemName: item.itemName,
                                       itemRateAmount: item.itemRateAmount,
                                       quantity: item.quantity,
+                                      itemNetAmount: amount,
                                     );
                                   },
                                 ),

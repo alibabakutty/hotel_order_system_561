@@ -20,43 +20,42 @@ class FirebaseService {
 
   // Add complete order with items to Firestore
   Future<bool> addOrderMasterData({
-  required List<OrderItem> orderItems,
-  required TableMasterData table,
-  required String orderNumber,
-  required double totalQty,
-  required double totalAmount,
-  required int maleCount,
-  required int femaleCount,
-  required int kidsCount,
-  required String supplierName, // 👈 New parameter
-}) async {
-  try {
-    int guestCount = maleCount + femaleCount + kidsCount;
+    required List<OrderItem> orderItems,
+    required TableMasterData table,
+    required String orderNumber,
+    required double totalQty,
+    required double totalAmount,
+    required int maleCount,
+    required int femaleCount,
+    required int kidsCount,
+    required String supplierName, // 👈 New parameter
+  }) async {
+    try {
+      int guestCount = maleCount + femaleCount + kidsCount;
 
-    DocumentReference orderRef = await _db.collection('orders').add({
-      'order_number': orderNumber,
-      'table_number': table.tableNumber,
-      'supplier_name': supplierName, // 👈 Save to Firestore
-      'total_quantity': totalQty,
-      'total_amount': totalAmount,
-      'guest_count': guestCount,
-      'male_count': maleCount,
-      'female_count': femaleCount,
-      'kids_count': kidsCount,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+      DocumentReference orderRef = await _db.collection('orders').add({
+        'order_number': orderNumber,
+        'table_number': table.tableNumber,
+        'supplier_name': supplierName, // 👈 Save to Firestore
+        'total_quantity': totalQty,
+        'total_amount': totalAmount,
+        'guest_count': guestCount,
+        'male_count': maleCount,
+        'female_count': femaleCount,
+        'kids_count': kidsCount,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
-    for (OrderItem item in orderItems) {
-      await orderRef.collection('items').add(item.toMap());
+      for (OrderItem item in orderItems) {
+        await orderRef.collection('items').add(item.toFirestore());
+      }
+
+      return true;
+    } catch (e) {
+      print('Error adding full order data: $e');
+      return false;
     }
-
-    return true;
-  } catch (e) {
-    print('Error adding full order data: $e');
-    return false;
   }
-}
-
 
   // add item master data to firestore
   Future<bool> addItemMasterData(ItemMasterData itemMasterData) async {

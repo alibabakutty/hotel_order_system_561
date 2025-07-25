@@ -324,6 +324,9 @@ class _OrderMasterState extends State<OrderMaster> {
       }
 
       try {
+        // Generate order number after click submit button
+        _currentOrderNumber = _generateOrderNumber();
+
         double totalQty = 0.0;
         double totalAmount = 0.0;
         for (var item in orderItems) {
@@ -391,14 +394,11 @@ class _OrderMasterState extends State<OrderMaster> {
       // Generate new order number when a new table is selected
       setState(() {
         _selectedTable = table;
-        _currentOrderNumber = _generateOrderNumber();
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Table ${table.tableNumber} selected - Order $_currentOrderNumber created',
-          ),
+          content: Text('Table ${table.tableNumber} selected'),
           backgroundColor: Colors.green,
         ),
       );
@@ -560,25 +560,6 @@ class _OrderMasterState extends State<OrderMaster> {
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
                       children: [
-                        // Header (Table Number & Title)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (_selectedTable != null)
-                              Chip(
-                                label: Text(
-                                  'Table ${_selectedTable!.tableNumber}',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                backgroundColor: Colors.deepPurple[400],
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
                         // **Table Header (Fixed - Scrolls Horizontally)**
                         SingleChildScrollView(
                           scrollDirection:

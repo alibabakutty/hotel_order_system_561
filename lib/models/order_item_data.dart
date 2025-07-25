@@ -3,17 +3,24 @@ class OrderItem {
   final String itemName;
   final double quantity;
   final double itemRateAmount;
+  final double itemNetAmount;
 
   OrderItem({
     required this.itemCode,
     required this.itemName,
     required this.quantity,
     required this.itemRateAmount,
+    required this.itemNetAmount,
   });
 
   // Empty constructor with default quantity 1
-  factory OrderItem.empty() =>
-      OrderItem(itemCode: '', itemName: '', quantity: 1.0, itemRateAmount: 0.0);
+  factory OrderItem.empty() => OrderItem(
+    itemCode: '',
+    itemName: '',
+    quantity: 1.0,
+    itemRateAmount: 0.0,
+    itemNetAmount: 0.0,
+  );
 
   // CopyWith method for immutable updates
   OrderItem copyWith({
@@ -21,32 +28,36 @@ class OrderItem {
     String? itemName,
     double? quantity,
     double? itemRateAmount,
+    double? itemNetAmount,
   }) {
     return OrderItem(
       itemCode: itemCode ?? this.itemCode,
       itemName: itemName ?? this.itemName,
       quantity: quantity ?? this.quantity,
       itemRateAmount: itemRateAmount ?? this.itemRateAmount,
+      itemNetAmount: itemNetAmount ?? this.itemNetAmount, // Preserve the original itemNetAmount
     );
   }
 
   // Convert to Map for serialization
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toFirestore() {
     return {
       'itemCode': itemCode,
       'itemName': itemName,
       'quantity': quantity,
       'itemRateAmount': itemRateAmount,
+      'itemNetAmount': itemNetAmount,
     };
   }
 
   // Create from Map for deserialization
-  static OrderItem fromMap(Map<String, dynamic> map) {
+  static OrderItem fromFirestore(Map<String, dynamic> map) {
     return OrderItem(
       itemCode: map['itemCode'] ?? '',
       itemName: map['itemName'] ?? '',
       quantity: map['quantity']?.toDouble() ?? 0.0,
       itemRateAmount: map['itemRateAmount']?.toDouble() ?? 0.0,
+      itemNetAmount: map['itemNetAmount']?.toDouble() ?? 0.0,
     );
   }
 
@@ -58,7 +69,8 @@ class OrderItem {
         other.itemCode == itemCode &&
         other.itemName == itemName &&
         other.quantity == quantity &&
-        other.itemRateAmount == itemRateAmount;
+        other.itemRateAmount == itemRateAmount &&
+        other.itemNetAmount == itemNetAmount;
   }
 
   // Hashcode implementation
@@ -69,6 +81,7 @@ class OrderItem {
       itemName.hashCode,
       quantity.hashCode,
       itemRateAmount.hashCode,
+      itemNetAmount.hashCode,
     );
   }
 
@@ -79,6 +92,7 @@ class OrderItem {
         'itemCode: $itemCode, '
         'itemName: $itemName, '
         'quantity: $quantity, '
+        'itemNetAmount: $itemNetAmount, '
         'itemRateAmount: $itemRateAmount)';
   }
 

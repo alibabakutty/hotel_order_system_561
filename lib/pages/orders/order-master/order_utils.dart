@@ -13,8 +13,13 @@ extension StringExtension on String {
 }
 
 extension OrderItemExtension on OrderItem {
-  static OrderItem empty() =>
-      OrderItem(itemCode: '', itemName: '', itemRateAmount: 0.0, quantity: 1);
+  static OrderItem empty() => OrderItem(
+    itemCode: '',
+    itemName: '',
+    itemRateAmount: 0.0,
+    quantity: 1,
+    itemNetAmount: 0.0,
+  );
 }
 
 String getDisplayName(String name) =>
