@@ -323,24 +323,66 @@ class _OrderMasterState extends State<OrderMaster> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Order $_currentOrderNumber for Table ${_selectedTable!.tableNumber} submitted successfully!',
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      try {
+        double totalQty = 0.0;
+        double totalAmount = 0.0;
+        for (var item in orderItems) {
+          totalQty += item.quantity;
+          totalAmount += item.quantity * item.itemRateAmount;
+        }
 
-      setState(() {
-        orderItems = [OrderItemExtension.empty()];
-        // Don't clear table or order number - keep them for next order
-        _quantityController.clear();
-        _maleController.clear();
-        _femaleController.clear();
-        _kidsController.clear();
-      });
+        // Safely parse guest count fields
+        final int maleCount = int.tryParse(_maleController.text.trim()) ?? 0;
+        final int femaleCount =
+            int.tryParse(_femaleController.text.trim()) ?? 0;
+        final int kidsCount = int.tryParse(_kidsController.text.trim()) ?? 0;
+
+        final success = await FirebaseService().addOrderMasterData(
+          orderItems: orderItems,
+          table: _selectedTable!,
+          orderNumber: _currentOrderNumber,
+          totalQty: totalQty,
+          totalAmount: totalAmount,
+          maleCount: maleCount,
+          femaleCount: femaleCount,
+          kidsCount: kidsCount,
+          supplierName: supplierUsername!,
+        );
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Order $_currentOrderNumber for Table ${_selectedTable!.tableNumber} submitted successfully!',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+
+          setState(() {
+            orderItems = [OrderItemExtension.empty()];
+            _quantityController.clear();
+            _maleController.clear();
+            _femaleController.clear();
+            _kidsController.clear();
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to submit order. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error submitting order: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -522,14 +564,6 @@ class _OrderMasterState extends State<OrderMaster> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'ORDER ITEMS',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple[800],
-                              ),
-                            ),
                             if (_selectedTable != null)
                               Chip(
                                 label: Text(
@@ -659,60 +693,65 @@ class _OrderMasterState extends State<OrderMaster> {
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.deepPurple[100]!),
                           ),
-                          child: Column(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Total Items:', style: totalTextStyle),
-                                  Text(
-                                    _totalQuantity.toStringAsFixed(
-                                      _totalQuantity % 1 == 0 ? 0 : 2,
-                                    ),
-                                    style: totalTextStyle,
-                                  ),
-                                ],
+                              Text('Total Items:', style: totalTextStyle),
+                              Text(
+                                _totalQuantity.toStringAsFixed(
+                                  _totalQuantity % 1 == 0 ? 0 : 2,
+                                ),
+                                style: totalTextStyle,
                               ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Total Amount:', style: totalTextStyle),
-                                  Text(
-                                    '₹${_totalAmount.toStringAsFixed(2)}',
-                                    style: amountTextStyle,
-                                  ),
-                                ],
+                              Text('Total Amount:', style: totalTextStyle),
+                              Text(
+                                '₹${_totalAmount.toStringAsFixed(2)}',
+                                style: amountTextStyle,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 5),
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
+                          height:
+                              48, // Slightly reduced height for a more professional look
                           child: ElevatedButton(
                             onPressed: _submitOrder,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple[700],
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(
+                                  6,
+                                ), // Slightly smaller radius
                               ),
-                              elevation: 2,
+                              elevation:
+                                  1, // Reduced elevation for flatter design
+                              shadowColor: Colors
+                                  .transparent, // Remove shadow for cleaner look
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ), // Consistent padding
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize:
+                                  MainAxisSize.min, // Tighter row sizing
                               children: [
-                                Icon(Icons.check_circle_outline, size: 20),
-                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.check_circle_outline,
+                                  size: 18,
+                                ), // Slightly smaller icon
+                                SizedBox(width: 6), // Reduced spacing
                                 Text(
                                   'SUBMIT ORDER',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14, // Slightly smaller font
+                                    fontWeight: FontWeight
+                                        .w600, // Semi-bold instead of bold
+                                    letterSpacing:
+                                        0.5, // Subtle letter spacing for professionalism
                                   ),
                                 ),
                               ],

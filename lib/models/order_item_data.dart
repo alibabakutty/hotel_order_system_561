@@ -11,10 +11,26 @@ class OrderItem {
     required this.itemRateAmount,
   });
 
-  // Add this empty constructor
+  // Empty constructor with default quantity 1
   factory OrderItem.empty() =>
       OrderItem(itemCode: '', itemName: '', quantity: 1.0, itemRateAmount: 0.0);
 
+  // CopyWith method for immutable updates
+  OrderItem copyWith({
+    String? itemCode,
+    String? itemName,
+    double? quantity,
+    double? itemRateAmount,
+  }) {
+    return OrderItem(
+      itemCode: itemCode ?? this.itemCode,
+      itemName: itemName ?? this.itemName,
+      quantity: quantity ?? this.quantity,
+      itemRateAmount: itemRateAmount ?? this.itemRateAmount,
+    );
+  }
+
+  // Convert to Map for serialization
   Map<String, dynamic> toMap() {
     return {
       'itemCode': itemCode,
@@ -24,6 +40,7 @@ class OrderItem {
     };
   }
 
+  // Create from Map for deserialization
   static OrderItem fromMap(Map<String, dynamic> map) {
     return OrderItem(
       itemCode: map['itemCode'] ?? '',
@@ -32,4 +49,47 @@ class OrderItem {
       itemRateAmount: map['itemRateAmount']?.toDouble() ?? 0.0,
     );
   }
+
+  // Equality comparison
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is OrderItem &&
+        other.itemCode == itemCode &&
+        other.itemName == itemName &&
+        other.quantity == quantity &&
+        other.itemRateAmount == itemRateAmount;
+  }
+
+  // Hashcode implementation
+  @override
+  int get hashCode {
+    return Object.hash(
+      itemCode.hashCode,
+      itemName.hashCode,
+      quantity.hashCode,
+      itemRateAmount.hashCode,
+    );
+  }
+
+  // For debugging/logging (shows all fields)
+  @override
+  String toString() {
+    return 'OrderItem('
+        'itemCode: $itemCode, '
+        'itemName: $itemName, '
+        'quantity: $quantity, '
+        'itemRateAmount: $itemRateAmount)';
+  }
+
+  // For UI display (shows just the name)
+  String toDisplayString() {
+    return itemName;
+  }
+
+  // Calculated property for total amount
+  double get totalAmount => quantity * itemRateAmount;
+
+  // Formatted string for amount display
+  String get formattedAmount => '₹${totalAmount.toStringAsFixed(2)}';
 }

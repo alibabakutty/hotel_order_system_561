@@ -3,7 +3,6 @@ import 'package:food_order_system/models/item_master_data.dart';
 import 'package:food_order_system/models/order_item_data.dart';
 import 'package:food_order_system/models/supplier_master_data.dart';
 import 'package:food_order_system/models/table_master_data.dart';
-import 'package:intl/intl.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -19,100 +18,45 @@ class FirebaseService {
 
   FirebaseService();
 
-  /// Generates daily sequential order number in DINE-0001 format
-  Future<String> generateDailyOrderNumber() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final dateKey = DateFormat('yyyy-MM-dd').format(today);
+  // Add complete order with items to Firestore
+  Future<bool> addOrderMasterData({
+  required List<OrderItem> orderItems,
+  required TableMasterData table,
+  required String orderNumber,
+  required double totalQty,
+  required double totalAmount,
+  required int maleCount,
+  required int femaleCount,
+  required int kidsCount,
+  required String supplierName, // 👈 New parameter
+}) async {
+  try {
+    int guestCount = maleCount + femaleCount + kidsCount;
 
-    /// Saves complete order to Firestore with all items
-    Future<bool> saveOrder({
-      required String orderNumber,
-      required String supplierName,
-      required int tableNumber,
-      required int totalMembers,
-      required int maleCount,
-      required int femaleCount,
-      required int kidsCount,
-      required double totalQuantity,
-      required double totalAmount,
-      required List<OrderItem> items,
-    }) async {
-      try {
-        final now = DateTime.now();
-        final dateStr = DateFormat('yyyy-MM-dd').format(now);
+    DocumentReference orderRef = await _db.collection('orders').add({
+      'order_number': orderNumber,
+      'table_number': table.tableNumber,
+      'supplier_name': supplierName, // 👈 Save to Firestore
+      'total_quantity': totalQty,
+      'total_amount': totalAmount,
+      'guest_count': guestCount,
+      'male_count': maleCount,
+      'female_count': femaleCount,
+      'kids_count': kidsCount,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
-        // Order document reference
-        final orderRef = orders
-            .doc(dateStr)
-            .collection(supplierName)
-            .doc(orderNumber);
-
-        // First check if order exists
-        if ((await orderRef.get()).exists) {
-          print('Order $orderNumber already exists');
-          return false;
-        }
-
-        // Save order summary
-        await orderRef.set({
-          'orderNumber': orderNumber,
-          'supplierName': supplierName,
-          'tableNumber': tableNumber,
-          'totalMembers': totalMembers,
-          'maleCount': maleCount,
-          'femaleCount': femaleCount,
-          'kidsCount': kidsCount,
-          'totalQuantity': totalQuantity,
-          'totalAmount': totalAmount,
-          'timestamp': FieldValue.serverTimestamp(),
-          'status': 'pending',
-          'date': dateStr,
-        });
-
-        // Save all items in a batch
-        final itemsCollection = orderRef.collection('items');
-        final batch = _db.batch();
-
-        for (final item in items.where((i) => i.itemCode.isNotEmpty)) {
-          final docRef = itemsCollection.doc();
-          batch.set(docRef, {
-            'itemCode': item.itemCode,
-            'itemName': item.itemName,
-            'quantity': item.quantity,
-            'rateAmount': item.itemRateAmount,
-            'netAmount': item.itemRateAmount * item.quantity,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
-        }
-
-        await batch.commit();
-        return true;
-      } catch (e) {
-        print('Error saving order: $e');
-        return false;
-      }
+    for (OrderItem item in orderItems) {
+      await orderRef.collection('items').add(item.toMap());
     }
 
-    try {
-      return await _db.runTransaction<String>((transaction) async {
-        final counterDoc = counters.doc('orders_$dateKey');
-        final counterSnapshot = await transaction.get(counterDoc);
-
-        int currentCount = 1;
-        if (counterSnapshot.exists) {
-          currentCount =
-              (counterSnapshot.data() as Map<String, dynamic>)['count'] + 1;
-        }
-
-        transaction.set(counterDoc, {'count': currentCount});
-        return 'DINE-${currentCount.toString().padLeft(4, '0')}';
-      });
-    } catch (e) {
-      print('Error generating order number: $e');
-      throw Exception('Failed to generate order number');
-    }
+    return true;
+  } catch (e) {
+    print('Error adding full order data: $e');
+    return false;
   }
+}
+
 
   // add item master data to firestore
   Future<bool> addItemMasterData(ItemMasterData itemMasterData) async {

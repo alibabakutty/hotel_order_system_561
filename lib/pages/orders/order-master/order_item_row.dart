@@ -29,55 +29,108 @@ class OrderItemRow extends StatefulWidget {
 }
 
 class _OrderItemRowState extends State<OrderItemRow> {
-  late FocusNode focusNode;
-  late TextEditingController quantityController;
-  late TextEditingController netAmountController;
+  late FocusNode _searchFocusNode;
+  late TextEditingController _quantityController;
+  late TextEditingController _netAmountController;
+  late TextEditingController _itemNameController;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    focusNode = FocusNode();
-    quantityController = TextEditingController(
+    _searchFocusNode = FocusNode();
+    _quantityController = TextEditingController(
       text: widget.item.quantity % 1 == 0
           ? widget.item.quantity.toInt().toString()
           : widget.item.quantity.toStringAsFixed(2),
     );
-    netAmountController = TextEditingController(
+    _netAmountController = TextEditingController(
       text:
           '₹${(widget.item.itemRateAmount * widget.item.quantity).toStringAsFixed(2)}',
     );
+    _itemNameController = TextEditingController(text: widget.item.itemName);
 
-    // Add listener to quantity controller
-    quantityController.addListener(_updateAmount);
+    _quantityController.addListener(_updateAmount);
+    _itemNameController.addListener(_handleNameChange);
+  }
+
+  void _handleNameChange() {
+    if (_itemNameController.text.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onUpdate(widget.index, OrderItem.empty());
+        }
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onUpdate(
+            widget.index,
+            widget.item.copyWith(itemName: _itemNameController.text),
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(OrderItemRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.item != oldWidget.item) {
+      if (widget.item.itemCode.isEmpty) {
+        _searchController.clear();
+      } else {
+        _itemNameController.text = widget.item.itemName;
+      }
+      _quantityController.text = widget.item.quantity % 1 == 0
+          ? widget.item.quantity.toInt().toString()
+          : widget.item.quantity.toStringAsFixed(2);
+      _netAmountController.text =
+          '₹${(widget.item.itemRateAmount * widget.item.quantity).toStringAsFixed(2)}';
+    }
   }
 
   @override
   void dispose() {
-    quantityController.removeListener(_updateAmount);
-    quantityController.dispose();
-    netAmountController.dispose();
-    focusNode.dispose();
+    _quantityController.removeListener(_updateAmount);
+    _itemNameController.removeListener(_handleNameChange);
+    _quantityController.dispose();
+    _netAmountController.dispose();
+    _itemNameController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
   void _updateAmount() {
-    final quantity = double.tryParse(quantityController.text) ?? 0;
-    final rate = widget.item.itemRateAmount;
-    final amount = quantity * rate;
+    final quantity = double.tryParse(_quantityController.text) ?? 0;
+    final amount = quantity * widget.item.itemRateAmount;
 
-    // Update amount display
-    netAmountController.text = '₹${amount.toStringAsFixed(2)}';
+    _netAmountController.text = '₹${amount.toStringAsFixed(2)}';
 
-    // Update parent widget with new quantity
-    widget.onUpdate(
-      widget.index,
-      OrderItem(
-        itemCode: widget.item.itemCode,
-        itemName: widget.item.itemName,
-        itemRateAmount: widget.item.itemRateAmount,
-        quantity: quantity,
-      ),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.onUpdate(widget.index, widget.item.copyWith(quantity: quantity));
+      }
+    });
+  }
+
+  void _handleItemSelected(ItemMasterData selectedItem) {
+    final newItem = OrderItem(
+      itemCode: selectedItem.itemCode.toString(),
+      itemName: selectedItem.itemName,
+      itemRateAmount: selectedItem.itemRateAmount,
+      quantity: 1.0,
     );
+
+    _quantityController.text = '1';
+    _netAmountController.text =
+        '₹${selectedItem.itemRateAmount.toStringAsFixed(2)}';
+    _itemNameController.text = selectedItem.itemName;
+
+    widget.onUpdate(widget.index, newItem);
+    widget.onItemSelected();
+    _searchController.clear();
   }
 
   @override
@@ -111,11 +164,9 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 width: 280,
                 height: 32,
                 child: widget.item.itemCode.isEmpty
-                    ? _buildItemSearchField(focusNode)
+                    ? _buildItemSearchField()
                     : TextFormField(
-                        controller: TextEditingController(
-                          text: widget.item.itemName,
-                        ),
+                        controller: _itemNameController,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
@@ -128,24 +179,13 @@ class _OrderItemRowState extends State<OrderItemRow> {
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        onChanged: (value) {
-                          widget.onUpdate(
-                            widget.index,
-                            OrderItem(
-                              itemCode: widget.item.itemCode,
-                              itemName: value,
-                              itemRateAmount: widget.item.itemRateAmount,
-                              quantity: widget.item.quantity,
-                            ),
-                          );
-                        },
                       ),
               ),
             ],
           ),
         ),
 
-        // Second Row - Qty, Rate, Amount, Delete
+        // Second Row - Qty, Rate, Amount, Buttons
         Container(
           padding: const EdgeInsets.symmetric(vertical: 2.0),
           width: 1000,
@@ -158,7 +198,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 width: 40,
                 height: 32,
                 child: TextFormField(
-                  controller: quantityController,
+                  controller: _quantityController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(
@@ -181,6 +221,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 width: 70,
                 height: 32,
                 child: TextFormField(
+                  readOnly: true,
                   controller: TextEditingController(
                     text: widget.item.itemRateAmount > 0
                         ? '₹${widget.item.itemRateAmount.toStringAsFixed(2)}'
@@ -194,7 +235,6 @@ class _OrderItemRowState extends State<OrderItemRow> {
                     ),
                     isDense: true,
                   ),
-                  readOnly: true,
                   style: TextStyle(
                     color: Colors.grey[800],
                     fontWeight: FontWeight.bold,
@@ -208,7 +248,8 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 width: 70,
                 height: 32,
                 child: TextFormField(
-                  controller: netAmountController,
+                  readOnly: true,
+                  controller: _netAmountController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(
@@ -217,7 +258,6 @@ class _OrderItemRowState extends State<OrderItemRow> {
                     ),
                     isDense: true,
                   ),
-                  readOnly: true,
                   style: TextStyle(
                     color: Colors.grey[800],
                     fontWeight: FontWeight.bold,
@@ -226,7 +266,7 @@ class _OrderItemRowState extends State<OrderItemRow> {
                 ),
               ),
               const SizedBox(width: 4),
-              // Delete button
+              // Add button
               SizedBox(
                 width: 32,
                 height: 32,
@@ -254,63 +294,32 @@ class _OrderItemRowState extends State<OrderItemRow> {
     );
   }
 
-  Widget _buildItemSearchField(FocusNode focusNode) {
-    final textController = TextEditingController();
-
+  Widget _buildItemSearchField() {
     return RawAutocomplete<ItemMasterData>(
-      focusNode: focusNode,
-      textEditingController: textController,
+      focusNode: _searchFocusNode,
+      textEditingController: _searchController,
       optionsBuilder: (TextEditingValue textEditingValue) {
-        if (widget.isLoadingItems) {
-          return const Iterable<ItemMasterData>.empty();
-        }
-        return widget.allItems;
+        if (widget.isLoadingItems) return const Iterable.empty();
+
+        return widget.allItems.where((item) {
+          if (textEditingValue.text.isEmpty) return true;
+          final searchTerm = textEditingValue.text.toLowerCase();
+          return item.itemCode.toString().toLowerCase().contains(searchTerm) ||
+              item.itemName.toLowerCase().contains(searchTerm);
+        });
       },
-      onSelected: (ItemMasterData selection) {
-        final initialQuantity = 1.0;
-        final initialAmount = selection.itemRateAmount * initialQuantity;
-
-        quantityController.text = initialQuantity.toStringAsFixed(0);
-        netAmountController.text = '₹${initialAmount.toStringAsFixed(2)}';
-
-        widget.onUpdate(
-          widget.index,
-          OrderItem(
-            itemCode: selection.itemCode.toString(),
-            itemName: selection.itemName.toUpperCase(),
-            itemRateAmount: selection.itemRateAmount,
-            quantity: initialQuantity,
+      onSelected: _handleItemSelected,
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'SEARCH BY CODE/NAME',
+            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            isDense: true,
           ),
-        );
-
-        widget.onItemSelected();
-      },
-      fieldViewBuilder: (context, controller, node, onFieldSubmitted) {
-        return GestureDetector(
-          onTap: () {
-            node.requestFocus();
-            // Clear and refocus to ensure options show
-            controller.clear();
-            Future.delayed(Duration.zero, () => node.requestFocus());
-          },
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: controller,
-              focusNode: node,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'TAP TO SELECT ITEM',
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-                isDense: true,
-              ),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              showCursor: false,
-              readOnly: true,
-            ),
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
@@ -325,18 +334,26 @@ class _OrderItemRowState extends State<OrderItemRow> {
                     itemCount: options.length,
                     itemBuilder: (context, index) {
                       final item = options.elementAt(index);
-                      return ListTile(
-                        dense: true,
-                        visualDensity: VisualDensity.compact,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12.0,
-                          vertical: 4.0,
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade800),
+                          ),
                         ),
-                        title: Text(
-                          '${item.itemCode} - ${item.itemName.toUpperCase()} - ₹${item.itemRateAmount}',
-                          style: const TextStyle(fontSize: 13),
+                        child: ListTile(
+                          dense: true,
+                          visualDensity: const VisualDensity(
+                            vertical: -4,
+                          ), // Extremely compact
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8.0,
+                          ),
+                          title: Text(
+                            '${item.itemCode} - ${item.itemName} - ₹${item.itemRateAmount}',
+                            style: const TextStyle(fontSize: 13, height: 1.1),
+                          ),
+                          onTap: () => onSelected(item),
                         ),
-                        onTap: () => onSelected(item),
                       );
                     },
                   ),
